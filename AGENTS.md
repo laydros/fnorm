@@ -18,6 +18,7 @@ go test -v -run TestNormalizeFilename
 # Format and lint code (run before committing)
 go fmt ./...
 go vet ./...
+golangci-lint run
 
 # Build for all platforms
 make build-all
@@ -71,5 +72,9 @@ Tests use table-driven testing pattern with test cases covering:
 
 - Go 1.25 or later required
 - All text files must end with a single trailing newline
-- Run `go fmt`, `go vet`, and `go test` before committing changes
+- Run `go fmt`, `go vet`, `golangci-lint run`, and `go test` before committing changes
 - **Update both README.md and AGENTS.md when making changes that affect project behavior, usage, or contributor guidelines**
+
+## CI
+
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet`, `golangci-lint run`, and `go test ./...` on every push and pull request.
