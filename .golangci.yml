@@ -2,8 +2,6 @@ run:
   timeout: 1m
   issues-exit-code: 1
   tests: true
-  skip-dirs: []
-  skip-files: []
 
 output:
   formats:
@@ -44,10 +42,12 @@ linters-settings:
   goimports:
     local-prefixes: github.com/laydros/fnorm
   mnd:
-    settings:
-      mnd:
-        # don't include the "operation" and "assign"
-        checks: [argument,case,condition,return]
+    # don't include the "operation" and "assign"
+    checks:
+      - argument
+      - case
+      - condition
+      - return
   govet:
     settings:
       printf:
@@ -61,12 +61,9 @@ linters-settings:
   misspell:
     locale: US
   nolintlint:
-    allow-leading-space: true # don't require machine-readable nolint directives (i.e. with no leading space)
     allow-unused: false # report any unused nolint directives
     require-explanation: false # don't require an explanation for nolint directives
     require-specific: false # don't require nolint directives to be specific about which linter is being skipped
-  revive:
-    min-confidence: 0
 
 linters:
   # please, do not use `enable-all`: it's deprecated and will be removed soon.
@@ -107,20 +104,6 @@ linters:
     - unused
     - whitespace
 
-  # don't enable:
-  # - asciicheck
-  # - gochecknoglobals
-  # - gocognit
-  # - godot
-  # - godox
-  # - goerr113
-  # - interfacer
-  # - maligned
-  # - nestif
-  # - prealloc
-  # - testpackage
-  # - wsl
-
 issues:
   exclude-rules:
     - path: _test\.go
@@ -142,4 +125,3 @@ issues:
 severity:
   default-severity: error
   case-sensitive: false
-  rules: []
