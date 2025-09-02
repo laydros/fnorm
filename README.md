@@ -51,6 +51,14 @@ fnorm *.jpg
 3. **Forbidden characters**: Replaced with hyphens
 4. **Allowed characters**: Letters, numbers, hyphens (-), underscores (_), periods (.)
 5. **Cleanup**: Multiple hyphens become single hyphens
+6. **Special Character Replacements**: should use the following (not yet implemented)
+
+| Original | Replacement | Example |
+|----------|-------------|---------|
+| / (slash) | -or- | `tcp-or-udp-guide.md` |
+| & (ampersand) | -and- | `backup-and-restore-process.md` |
+| @ (at) | -at- | `meeting-at-headquarters.md` |
+| % (percent) | -percent | `cpu-usage-90-percent.txt` |
 
 ## Examples
 
