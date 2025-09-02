@@ -118,7 +118,6 @@ func processFile(filePath string) error {
 // normalizeFilename transforms a filename according to the normalization rules:
 // spaces to hyphens, lowercase conversion, forbidden character replacement, etc.
 func normalizeFilename(filename string) string {
-
 	// Get file extension
 	ext := filepath.Ext(filename)
 	nameOnly := strings.TrimSuffix(filename, ext)
