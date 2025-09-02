@@ -5,7 +5,7 @@ This file provides guidance to AI assistants when working with code in this repo
 ## Build and Development Commands
 
 ```bash
-# Build the binary
+# Build the binary (with version injection from git tags)
 make build
 
 # Install development tools (run once)
@@ -35,6 +35,9 @@ make clean
 
 # Run the tool directly without building
 go run . [flags] file1 [file2 ...]
+
+# Check version information
+./fnorm -version
 ```
 
 ## Architecture
@@ -60,9 +63,11 @@ The normalization pipeline in `normalizeFilename()`:
 
 - Uses Go's `flag` package for CLI argument parsing with built-in `-h`/`--help` support
 - The `-dry-run` flag allows previewing changes without applying them
+- The `-version` flag shows version information (injected at build time via ldflags)
 - File operations check for existing targets to prevent accidental overwrites
 - Error handling reports issues per-file without stopping batch operations
 - Regular expressions handle character filtering and hyphen cleanup
+- Version management uses git tags with ldflags injection for builds
 
 ## Testing Approach
 

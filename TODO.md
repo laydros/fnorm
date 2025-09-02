@@ -6,27 +6,27 @@ This file tracks improvements to align the project with Go conventions and best 
 
 ### Performance Improvements
 
-- [ ] **Move regex compilation to package level** (main.go:104, 108)
+- [x] **Move regex compilation to package level** (main.go:104, 108) ✅ _Completed - moved to package-level vars_
 
   ```go
   var (
-      forbiddenCharsRe = regexp.MustCompile(`[^a-z0-9\-_.]`)
+      forbiddenCharsRe = regexp.MustCompile(forbiddenCharsPattern)
       multiHyphenRe    = regexp.MustCompile(`-+`)
   )
   ```
 
-- [ ] **Define constants for magic values** (main.go:97, 104)
+- [x] **Define constants for magic values** (main.go:97, 104) ✅ _Completed - added const section with proper naming_
 
   ```go
   const (
-      spaceReplacer = "-"
-      allowedChars  = `[^a-z0-9\-_.]`
+      spaceReplacer         = "-"
+      forbiddenCharsPattern = `[^a-z0-9\-_.]`
   )
   ```
 
 ### Documentation (Go Convention)
 
-- [ ] **Add package documentation comment** (top of main.go)
+- [x] **Add package documentation comment** (top of main.go) ✅ _Completed in commit 73f4024_
 
   ```go
   // Package main provides fnorm, a file name normalizer that converts
@@ -34,10 +34,10 @@ This file tracks improvements to align the project with Go conventions and best 
   package main
   ```
 
-- [ ] **Add function documentation** for all functions:
-  - [ ] `normalizeFilename` - Core normalization logic
-  - [ ] `processFile` - File processing with error handling
-  - [ ] `showHelp` - Usage information display
+- [x] **Add function documentation** for all functions: ✅ _Completed - added proper Go doc comments_
+  - [x] `normalizeFilename` - Core normalization logic
+  - [x] `processFile` - File processing with error handling
+  - [x] `showHelp` - Usage information display
 
 ## Phase 2: Core Improvements
 
@@ -114,15 +114,36 @@ This file tracks improvements to align the project with Go conventions and best 
 
 ### Linting & Quality
 
-- [x] **Add .golangci.yml** for consistent linting
+- [x] **Add .golangci.yml** for consistent linting ✅ _Completed in commits 73f4024 & a5fe935_
 - [ ] **Test with go vet -all**
 - [ ] **Add code coverage reporting**
 
 ### Build & Distribution
 
-- [ ] **Add version information** with ldflags
+- [x] **Add version information** with ldflags ✅ _Completed - added -version flag and Makefile ldflags injection_
 - [ ] **Consider adding Dockerfile**
-- [ ] **Add GitHub Actions** for CI/CD
+- [x] **Add GitHub Actions** for CI/CD ✅ _Completed in commit 7cc7ee7_
+
+---
+
+## ✅ Recently Completed (Latest Commits)
+
+### Development Infrastructure (Phase 5)
+
+- **GitHub Actions CI/CD** - Automated testing and linting on push/PR
+- **golangci-lint Configuration** - Comprehensive linting rules with schema compliance
+- **Development Tooling Setup** - `tools.go`, enhanced Makefile with quality checks
+- **Package Documentation** - Added required package comment
+- **Updated Documentation** - README.md and CLAUDE.md reflect new tooling
+
+### Files Added/Modified
+
+- `.github/workflows/ci.yml` - CI pipeline
+- `.golangci.yml` - Linter configuration
+- `tools.go` - Development dependencies
+- `Makefile` - Enhanced with `make tools`, `make check`, etc.
+- `main.go` - Added package documentation
+- `README.md` & `CLAUDE.md` - Updated development setup
 
 ---
 
@@ -132,3 +153,4 @@ This file tracks improvements to align the project with Go conventions and best 
 - Items are ordered by impact and ease of implementation
 - Feel free to tackle them in any order that makes sense
 - Update CLAUDE.md and README.md when you make structural changes
+- ✅ = Recently completed tasks (see commit history)

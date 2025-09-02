@@ -11,13 +11,27 @@ import (
 	"strings"
 )
 
+const (
+	version               = "dev" // Fallback version, overridden by ldflags from git tags
+	spaceReplacer         = "-"
+	forbiddenCharsPattern = `[^a-z0-9\-_.]`
+)
+
 var (
-	dryRun = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
+	dryRun           = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
+	showVersion      = flag.Bool("version", false, "Show version information")
+	forbiddenCharsRe = regexp.MustCompile(forbiddenCharsPattern)
+	multiHyphenRe    = regexp.MustCompile(`-+`)
 )
 
 func main() {
 	flag.Usage = showHelp
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("fnorm version %s\n", version)
+		return
+	}
 
 	args := flag.Args()
 	if len(args) == 0 {
@@ -33,6 +47,7 @@ func main() {
 	}
 }
 
+// showHelp displays usage information for the fnorm command.
 func showHelp() {
 	fmt.Printf(`fnorm - File name normalizer
 
@@ -45,6 +60,7 @@ Normalizes file names according to standards:
 
 Flags:
   -dry-run    Show what would be renamed without making changes
+  -version    Show version information
   -h, --help  Show this help message
 
 Examples:
@@ -54,12 +70,24 @@ Examples:
 `)
 }
 
+// processFile handles the renaming of a single file, checking for errors
+// and respecting the dry-run flag.
 func processFile(filePath string) error {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("file does not exist")
+	}
+	if info.IsDir() {
+		return fmt.Errorf("skipping directory: %s", filePath)
+	}
+
+	// Split path into directory and filename
 	dir := filepath.Dir(filePath)
 	filename := filepath.Base(filePath)
 
 	normalized := normalizeFilename(filename)
 
+	// If no change is needed
 	if filename == normalized {
 		if !*dryRun {
 			fmt.Printf("✓ %s (no changes needed)\n", filename)
@@ -87,7 +115,10 @@ func processFile(filePath string) error {
 	return nil
 }
 
+// normalizeFilename transforms a filename according to the normalization rules:
+// spaces to hyphens, lowercase conversion, forbidden character replacement, etc.
 func normalizeFilename(filename string) string {
+
 	// Get file extension
 	ext := filepath.Ext(filename)
 	nameOnly := strings.TrimSuffix(filename, ext)
@@ -96,19 +127,17 @@ func normalizeFilename(filename string) string {
 	result := nameOnly
 
 	// 1. Replace spaces with hyphens
-	result = strings.ReplaceAll(result, " ", "-")
+	result = strings.ReplaceAll(result, " ", spaceReplacer)
 
 	// 2. Convert to lowercase
 	result = strings.ToLower(result)
 
 	// 3. Replace forbidden characters with hyphens
 	// Keep only: letters, numbers, hyphens, underscores, periods
-	reg := regexp.MustCompile(`[^a-z0-9\-_.]`)
-	result = reg.ReplaceAllString(result, "-")
+	result = forbiddenCharsRe.ReplaceAllString(result, "-")
 
 	// 4. Clean up multiple consecutive hyphens
-	reg = regexp.MustCompile(`-+`)
-	result = reg.ReplaceAllString(result, "-")
+	result = multiHyphenRe.ReplaceAllString(result, "-")
 
 	// 5. Trim leading/trailing hyphens
 	result = strings.Trim(result, "-")

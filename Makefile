@@ -4,10 +4,14 @@ BINARY_NAME=fnorm
 BINARY_UNIX=$(BINARY_NAME)_unix
 BINARY_WINDOWS=$(BINARY_NAME).exe
 
+# Version from git or fallback
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+LDFLAGS=-ldflags "-X main.version=$(VERSION)"
+
 .DEFAULT_GOAL := build
 
 build:
-	go build -o $(BINARY_NAME) -v
+	go build $(LDFLAGS) -o $(BINARY_NAME) -v
 
 clean:
 	go clean
@@ -40,10 +44,10 @@ check: fmt vet lint test
 
 # Cross compilation
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $(BINARY_UNIX) -v
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BINARY_UNIX) -v
 
 build-windows:
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o $(BINARY_WINDOWS) -v
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BINARY_WINDOWS) -v
 
 build-all: build build-linux build-windows
 

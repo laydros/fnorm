@@ -19,6 +19,7 @@ make build
 ```
 
 Optionally install to `~/bin`:
+
 ```bash
 make install
 ```
@@ -32,6 +33,9 @@ fnorm "My Document.PDF"
 
 # Preview changes without applying
 fnorm -dry-run "File With Spaces.txt"
+
+# Check version
+fnorm -version
 
 # Process multiple files
 fnorm "File 1.jpg" "Another File.PNG" "Document (Copy).pdf"
@@ -60,6 +64,7 @@ fnorm *.jpg
 ## Flags
 
 - `-dry-run`: Preview changes without applying them
+- `-version`: Show version information
 - `-h`, `--help`: Show help message
 
 ## Building
@@ -98,6 +103,29 @@ make fmt         # Format code
 make vet         # Run go vet
 make check       # Run all quality checks
 ```
+
+### Version Management
+
+Version information is automatically injected at build time using git tags:
+
+```bash
+# Version is determined automatically from git
+make build  # Uses git describe --tags or "dev" as fallback
+
+# Check version
+./fnorm -version
+```
+
+**For releases:**
+
+1. Create a git tag: `git tag v1.2.3`
+2. Build: `make build` (version will be `v1.2.3`)
+3. Push tag: `git push origin v1.2.3`
+
+**For development:**
+
+- Builds without tags show commit hash or "dev"
+- Dirty working directory adds "-dirty" suffix
 
 This project was developed with AI assistance.
 
