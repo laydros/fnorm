@@ -34,3 +34,4 @@ install: build
 	cp $(BINARY_NAME) ~/bin/
 
 .PHONY: build clean test run build-linux build-windows build-all install
+

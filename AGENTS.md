@@ -1,12 +1,9 @@
-## Agent Instructions
+# AGENTS.md
 
-Welcome contributors! To keep this repository consistent and helpful for both humans and AI agents:
+This file provides guidance for AI coding assistants when working with code in this repository.
 
 1. Use Go 1.25 or later.
 2. Run `go fmt ./...`, `go vet ./...`, and `go test ./...` after making changes.
 3. Ensure all text files end with a single trailing newline.
 4. Update both `README.md` and this `AGENTS.md` whenever your changes affect project behavior, usage, or contributor guidance.
 5. The CLI relies on Go's built-in `-h`/`--help` flags for usage information.
-
-Thank you for helping maintain fnorm.
-

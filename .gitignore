@@ -26,6 +26,7 @@ go.work.sum
 
 # Project binary
 fnorm
+fnorm_unix
 
 # env file
 .env
