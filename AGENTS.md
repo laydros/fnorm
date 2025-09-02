@@ -6,6 +6,7 @@ Welcome contributors! To keep this repository consistent and helpful for both hu
 2. Run `go fmt ./...`, `go vet ./...`, and `go test ./...` after making changes.
 3. Ensure all text files end with a single trailing newline.
 4. Update both `README.md` and this `AGENTS.md` whenever your changes affect project behavior, usage, or contributor guidance.
+5. The CLI relies on Go's built-in `-h`/`--help` flags for usage information.
 
 Thank you for helping maintain fnorm.
 

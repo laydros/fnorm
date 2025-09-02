@@ -60,7 +60,7 @@ fnorm *.jpg
 ## Flags
 
 - `-dry-run`: Preview changes without applying them
-- `-help`: Show help message
+- `-h`, `--help`: Show help message
 
 ## Building
 
