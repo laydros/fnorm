@@ -78,3 +78,14 @@ make clean
 ## Development
 
 This project was developed with AI assistance.
+
+## Contributing
+
+Contributions are welcome. To keep the project consistent and easy to work with:
+
+- Use Go 1.25 or later.
+- Run `go fmt ./...`, `go vet ./...`, and `go test ./...` before submitting changes.
+- Ensure all text files end with a trailing newline.
+- Update both `README.md` and `AGENTS.md` whenever your changes affect project behavior or contributor instructions.
+
+See `AGENTS.md` for the full set of repository guidelines.
