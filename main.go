@@ -12,12 +12,12 @@ import (
 )
 
 const (
-	version               = "dev" // Fallback version, overridden by ldflags from git tags
 	spaceReplacer         = "-"
 	forbiddenCharsPattern = `[^a-z0-9\-_.]`
 )
 
 var (
+	version          = "dev" // Fallback version, overridden by ldflags from git tags
 	dryRun           = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
 	showVersion      = flag.Bool("version", false, "Show version information")
 	forbiddenCharsRe = regexp.MustCompile(forbiddenCharsPattern)
