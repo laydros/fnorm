@@ -1,3 +1,5 @@
+// Package main provides fnorm, a file name normalizer that converts
+// file names to lowercase with consistent formatting rules.
 package main
 
 import (

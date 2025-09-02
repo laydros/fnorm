@@ -77,6 +77,28 @@ make clean
 
 ## Development
 
+### Setup
+
+```bash
+# Install development tools
+make tools
+
+# Run code quality checks
+make check  # runs fmt, vet, lint, and test
+```
+
+### Available Make Targets
+
+```bash
+make build       # Build the binary
+make test        # Run tests
+make tools       # Install development tools
+make lint        # Run golangci-lint
+make fmt         # Format code
+make vet         # Run go vet
+make check       # Run all quality checks
+```
+
 This project was developed with AI assistance.
 
 ## CI
@@ -87,8 +109,8 @@ A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and p
 
 Contributions are welcome. To keep the project consistent and easy to work with:
 
-- Use Go 1.25 or later.
-- Run `go fmt ./...`, `go vet ./...`, `golangci-lint run`, and `go test ./...` before submitting changes.
+- Use Go 1.24.3 or later.
+- Run `make check` before submitting changes (runs fmt, vet, lint, and test).
 - Ensure all text files end with a trailing newline.
 - Update both `README.md` and `AGENTS.md` whenever your changes affect project behavior or contributor instructions.
 

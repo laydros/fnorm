@@ -8,17 +8,21 @@ This file provides guidance to AI assistants when working with code in this repo
 # Build the binary
 make build
 
+# Install development tools (run once)
+make tools
+
+# Run all quality checks (format, vet, lint, test)
+make check
+
+# Individual checks
+make test        # Run tests
+make lint        # Run golangci-lint
+make fmt         # Format code
+make vet         # Run go vet
+
 # Run tests
-make test
 go test -v
-
-# Run a specific test
-go test -v -run TestNormalizeFilename
-
-# Format and lint code (run before committing)
-go fmt ./...
-go vet ./...
-golangci-lint run
+go test -v -run TestNormalizeFilename  # Run specific test
 
 # Build for all platforms
 make build-all
@@ -39,6 +43,8 @@ This is a simple Go CLI tool with a single main package containing:
 
 - **main.go**: Entry point with CLI flag parsing, file processing logic, and the core `normalizeFilename()` function
 - **normalize_test.go**: Table-driven tests for the normalization logic
+- **tools.go**: Development tool dependencies (build tag: tools)
+- **.golangci.yml**: Linter configuration
 
 The normalization pipeline in `normalizeFilename()`:
 
@@ -68,11 +74,20 @@ Tests use table-driven testing pattern with test cases covering:
 - Multiple hyphen collapse
 - Extension case normalization
 
+## Development Setup
+
+New contributors should run:
+
+```bash
+make tools   # Install development tools like golangci-lint
+make check   # Verify everything works
+```
+
 ## Project Standards
 
-- Go 1.25 or later required
+- Go 1.24.3 or later required
 - All text files must end with a single trailing newline
-- Run `go fmt`, `go vet`, `golangci-lint run`, and `go test` before committing changes
+- Run `make check` before committing changes (includes fmt, vet, lint, and test)
 - **Update both README.md and AGENTS.md when making changes that affect project behavior, usage, or contributor guidelines**
 
 ## CI

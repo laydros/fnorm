@@ -21,6 +21,23 @@ test:
 run:
 	go run . $(ARGS)
 
+# Development tools
+tools:
+	go mod download
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Code quality checks
+lint:
+	golangci-lint run
+
+fmt:
+	go fmt ./...
+
+vet:
+	go vet ./...
+
+check: fmt vet lint test
+
 # Cross compilation
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $(BINARY_UNIX) -v
@@ -33,5 +50,5 @@ build-all: build build-linux build-windows
 install: build
 	cp $(BINARY_NAME) ~/bin/
 
-.PHONY: build clean test run build-linux build-windows build-all install
+.PHONY: build clean test run tools lint fmt vet check build-linux build-windows build-all install
 
