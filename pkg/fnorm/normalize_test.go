@@ -1,8 +1,8 @@
-package main
+package fnorm
 
 import "testing"
 
-func TestNormalizeFilename(t *testing.T) {
+func TestNormalize(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
@@ -37,7 +37,7 @@ func TestNormalizeFilename(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := normalizeFilename(tc.input)
+			got := Normalize(tc.input)
 			if got != tc.expected {
 				t.Fatalf("expected %q, got %q", tc.expected, got)
 			}
