@@ -1,5 +1,4 @@
-// Package main provides fnorm, a file name normalizer that converts
-// file names to lowercase with consistent formatting rules.
+// Package main implements the fnorm command-line interface.
 package main
 
 import (
@@ -7,21 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
-)
 
-const (
-	spaceReplacer         = "-"
-	forbiddenCharsPattern = `[^a-z0-9\-_.]`
+	fnorm "github.com/laydros/fnorm/pkg/fnorm" //nolint:depguard // internal package import
 )
 
 var (
-	version          = "dev" // Fallback version, overridden by ldflags from git tags
-	dryRun           = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
-	showVersion      = flag.Bool("version", false, "Show version information")
-	forbiddenCharsRe = regexp.MustCompile(forbiddenCharsPattern)
-	multiHyphenRe    = regexp.MustCompile(`-+`)
+	version     = "dev" // Fallback version, overridden by ldflags from git tags
+	dryRun      = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
+	showVersion = flag.Bool("version", false, "Show version information")
 )
 
 func main() {
@@ -85,7 +77,7 @@ func processFile(filePath string) error {
 	dir := filepath.Dir(filePath)
 	filename := filepath.Base(filePath)
 
-	normalized := normalizeFilename(filename)
+	normalized := fnorm.Normalize(filename)
 
 	// If no change is needed
 	if filename == normalized {
@@ -113,36 +105,4 @@ func processFile(filePath string) error {
 
 	fmt.Printf("Renamed: %s -> %s\n", filename, normalized)
 	return nil
-}
-
-// normalizeFilename transforms a filename according to the normalization rules:
-// spaces to hyphens, lowercase conversion, forbidden character replacement, etc.
-func normalizeFilename(filename string) string {
-	// Get file extension
-	ext := filepath.Ext(filename)
-	nameOnly := strings.TrimSuffix(filename, ext)
-
-	// Apply transformations to name only
-	result := nameOnly
-
-	// 1. Replace spaces with hyphens
-	result = strings.ReplaceAll(result, " ", spaceReplacer)
-
-	// 2. Convert to lowercase
-	result = strings.ToLower(result)
-
-	// 3. Replace forbidden characters with hyphens
-	// Keep only: letters, numbers, hyphens, underscores, periods
-	result = forbiddenCharsRe.ReplaceAllString(result, "-")
-
-	// 4. Clean up multiple consecutive hyphens
-	result = multiHyphenRe.ReplaceAllString(result, "-")
-
-	// 5. Trim leading/trailing hyphens
-	result = strings.Trim(result, "-")
-
-	// Convert extension to lowercase too
-	ext = strings.ToLower(ext)
-
-	return result + ext
 }

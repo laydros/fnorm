@@ -10,6 +10,12 @@ A simple Go tool that normalizes file names according to consistent standards.
 - Cleans up multiple consecutive hyphens
 - Preserves file extensions
 
+## Project Layout
+
+- `cmd/fnorm/main.go`: command-line entry point
+- `pkg/fnorm/normalize.go`: library package providing `Normalize`
+- `pkg/fnorm/normalize_test.go`: table-driven tests for normalization
+
 ## Installation
 
 ```bash

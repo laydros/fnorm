@@ -42,14 +42,15 @@ go run . [flags] file1 [file2 ...]
 
 ## Architecture
 
-This is a simple Go CLI tool with a single main package containing:
+This project is organized into separate command and library packages:
 
-- **main.go**: Entry point with CLI flag parsing, file processing logic, and the core `normalizeFilename()` function
-- **normalize_test.go**: Table-driven tests for the normalization logic
+- **cmd/fnorm/main.go**: CLI entry point with flag parsing and file processing logic
+- **pkg/fnorm/normalize.go**: Library package exporting the `Normalize` function
+- **pkg/fnorm/normalize_test.go**: Table-driven tests for the normalization logic
 - **tools.go**: Development tool dependencies (build tag: tools)
 - **.golangci.yml**: Linter configuration
 
-The normalization pipeline in `normalizeFilename()`:
+The normalization pipeline in `Normalize()`:
 
 1. Separates extension from filename
 2. Replaces spaces with hyphens
