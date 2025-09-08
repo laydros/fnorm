@@ -55,10 +55,11 @@ The normalization pipeline in `Normalize()`:
 1. Separates extension from filename
 2. Replaces spaces with hyphens
 3. Converts to lowercase
-4. Replaces forbidden characters (anything not alphanumeric, hyphen, underscore, or period) with hyphens
-5. Collapses multiple consecutive hyphens
-6. Trims leading/trailing hyphens
-7. Lowercases the extension
+4. Applies special character replacements (`/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent`)
+5. Replaces forbidden characters (anything not alphanumeric, hyphen, underscore, or period) with hyphens
+6. Collapses multiple consecutive hyphens
+7. Trims leading/trailing hyphens
+8. Lowercases the extension
 
 ## Key Implementation Details
 
@@ -68,6 +69,7 @@ The normalization pipeline in `Normalize()`:
 - File operations check for existing targets to prevent accidental overwrites
 - Error handling reports issues per-file without stopping batch operations
 - Regular expressions handle character filtering and hyphen cleanup
+- Explicit mappings handle special character replacements (`/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent`)
 - Version management uses git tags with ldflags injection for builds
 
 ## Testing Approach
@@ -79,6 +81,7 @@ Tests use table-driven testing pattern with test cases covering:
 - Forbidden character handling
 - Multiple hyphen collapse
 - Extension case normalization
+- Special character replacements
 
 ## Development Setup
 

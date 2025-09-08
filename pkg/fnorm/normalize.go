@@ -13,8 +13,14 @@ const (
 )
 
 var (
-	forbiddenCharsRe = regexp.MustCompile(forbiddenCharsPattern)
-	multiHyphenRe    = regexp.MustCompile(`-+`)
+	forbiddenCharsRe    = regexp.MustCompile(forbiddenCharsPattern)
+	multiHyphenRe       = regexp.MustCompile(`-+`)
+	specialReplacements = map[string]string{
+		"/": "-or-",
+		"&": "-and-",
+		"@": "-at-",
+		"%": "-percent",
+	}
 )
 
 // Normalize transforms a filename according to the normalization rules:
@@ -33,14 +39,19 @@ func Normalize(filename string) string {
 	// 2. Convert to lowercase
 	result = strings.ToLower(result)
 
-	// 3. Replace forbidden characters with hyphens
+	// 3. Apply special character replacements
+	for orig, repl := range specialReplacements {
+		result = strings.ReplaceAll(result, orig, repl)
+	}
+
+	// 4. Replace forbidden characters with hyphens
 	// Keep only: letters, numbers, hyphens, underscores, periods
 	result = forbiddenCharsRe.ReplaceAllString(result, "-")
 
-	// 4. Clean up multiple consecutive hyphens
+	// 5. Clean up multiple consecutive hyphens
 	result = multiHyphenRe.ReplaceAllString(result, "-")
 
-	// 5. Trim leading/trailing hyphens
+	// 6. Trim leading/trailing hyphens
 	result = strings.Trim(result, "-")
 
 	// Convert extension to lowercase too
