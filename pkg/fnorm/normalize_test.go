@@ -20,8 +20,28 @@ func TestNormalize(t *testing.T) {
 		},
 		{
 			name:     "forbidden characters replaced",
-			input:    "file@name!.txt",
+			input:    "file!name.txt",
 			expected: "file-name.txt",
+		},
+		{
+			name:     "slash replaced with or",
+			input:    "tcp/udp guide.md",
+			expected: "tcp-or-udp-guide.md",
+		},
+		{
+			name:     "ampersand replaced with and",
+			input:    "Backup & Restore Process.txt",
+			expected: "backup-and-restore-process.txt",
+		},
+		{
+			name:     "at sign replaced with at",
+			input:    "Meeting @ Headquarters.md",
+			expected: "meeting-at-headquarters.md",
+		},
+		{
+			name:     "percent sign replaced with percent",
+			input:    "CPU Usage 90%.txt",
+			expected: "cpu-usage-90-percent.txt",
 		},
 		{
 			name:     "multiple hyphens collapsed",

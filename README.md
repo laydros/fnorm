@@ -9,6 +9,7 @@ A simple Go tool that normalizes file names according to consistent standards.
 - Removes/replaces forbidden characters
 - Cleans up multiple consecutive hyphens
 - Preserves file extensions
+- Applies special character replacements (`/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent`)
 
 ## Project Layout
 
@@ -57,7 +58,7 @@ fnorm *.jpg
 3. **Forbidden characters**: Replaced with hyphens
 4. **Allowed characters**: Letters, numbers, hyphens (-), underscores (_), periods (.)
 5. **Cleanup**: Multiple hyphens become single hyphens
-6. **Special Character Replacements**: should use the following (not yet implemented)
+6. **Special Character Replacements**: uses the following replacements
 
 | Original | Replacement | Example |
 |----------|-------------|---------|
@@ -73,7 +74,10 @@ fnorm *.jpg
 | `My Document.PDF` | `my-document.pdf` |
 | `File (Copy).txt` | `file-copy.txt` |
 | `Report 2025-01-15.xlsx` | `report-2025-01-15.xlsx` |
-| `Photo & Video.mov` | `photo-video.mov` |
+| `Photo & Video.mov` | `photo-and-video.mov` |
+| `Meeting @ Headquarters.md` | `meeting-at-headquarters.md` |
+| `CPU Usage 90%.txt` | `cpu-usage-90-percent.txt` |
+| `tcp/udp guide.md` | `tcp-or-udp-guide.md` |
 
 ## Flags
 
