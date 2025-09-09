@@ -40,6 +40,11 @@ func main() {
 }
 
 // showHelp displays usage information for the fnorm command.
+//
+// Example:
+//
+//	flag.Usage = showHelp
+//	showHelp()
 func showHelp() {
 	fmt.Printf(`fnorm - File name normalizer
 
@@ -65,6 +70,12 @@ Examples:
 
 // processFile handles the renaming of a single file, checking for errors
 // and respecting the dry-run flag.
+//
+// Example:
+//
+//	if err := processFile("My File.txt"); err != nil {
+//	        log.Fatal(err)
+//	}
 func processFile(filePath string) error {
 	info, err := os.Stat(filePath)
 	if err != nil {

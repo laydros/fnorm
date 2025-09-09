@@ -25,6 +25,11 @@ var (
 
 // Normalize transforms a filename according to the normalization rules:
 // spaces to hyphens, lowercase conversion, forbidden character replacement, etc.
+//
+// Example:
+//
+//	normalized := Normalize("My File.PDF")
+//	// normalized == "my-file.pdf"
 func Normalize(filename string) string {
 	if filename == "" {
 		return ""
