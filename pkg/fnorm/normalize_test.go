@@ -53,6 +53,46 @@ func TestNormalize(t *testing.T) {
 			input:    "report.PDF",
 			expected: "report.pdf",
 		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "file without extension",
+			input:    "README",
+			expected: "readme",
+		},
+		{
+			name:     "multiple dots preserved",
+			input:    "file.name.txt",
+			expected: "file.name.txt",
+		},
+		{
+			name:     "unicode characters transliterated",
+			input:    "café.txt",
+			expected: "cafe.txt",
+		},
+		{
+			name:     "typographic dashes transliterated",
+			input:    "foo–bar—baz.txt",
+			expected: "foo-bar-baz.txt",
+		},
+		{
+			name:     "curly apostrophes transliterated",
+			input:    "rock’n’roll.txt",
+			expected: "rock-n-roll.txt",
+		},
+		{
+			name:     "smart quotes transliterated",
+			input:    "test“quote”file.txt",
+			expected: "test-quote-file.txt",
+		},
+		{
+			name:     "leading and trailing spaces",
+			input:    " file ",
+			expected: "file",
+		},
 	}
 
 	for _, tc := range tests {
