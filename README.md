@@ -145,6 +145,7 @@ make check  # runs fmt, vet, lint, and test
 ```bash
 make build       # Build the binary
 make test        # Run tests
+make coverage    # Run tests with coverage report
 make tools       # Install development tools
 make lint        # Run golangci-lint
 make fmt         # Format code
@@ -179,7 +180,7 @@ This project was developed with AI assistance.
 
 ## CI
 
-A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and pull request. It ensures the codebase passes `go fmt`, `go vet -all`, `golangci-lint run`, and `go test ./...`.
+A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and pull request. It ensures the codebase passes `go fmt`, `go vet -all`, `golangci-lint run`, and `make coverage` (tests with coverage).
 
 ## Contributing
 

@@ -22,6 +22,9 @@ clean:
 test:
 	go test -v
 
+coverage:
+	go test -coverprofile=coverage.out ./...
+
 run:
 	go run . $(ARGS)
 
@@ -54,5 +57,5 @@ build-all: build build-linux build-windows
 install: build
 	cp $(BINARY_NAME) ~/bin/
 
-.PHONY: build clean test run tools lint fmt vet check build-linux build-windows build-all install
+.PHONY: build clean test coverage run tools lint fmt vet check build-linux build-windows build-all install
 

@@ -16,6 +16,7 @@ make check
 
 # Individual checks
 make test        # Run tests
+make coverage    # Run tests with coverage profile
 make lint        # Run golangci-lint
 make fmt         # Format code
 make vet         # Run go vet -all
@@ -103,4 +104,4 @@ make check   # Verify everything works
 
 ## CI
 
-A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet -all`, `golangci-lint run`, and `go test ./...` on every push and pull request.
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet -all`, `golangci-lint run`, and `make coverage` on every push and pull request, uploading `coverage.out` as an artifact.
