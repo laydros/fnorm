@@ -1,5 +1,5 @@
-// Package normalize provides filename normalization utilities.
-package normalize
+// Package fnorm provides filename normalization utilities.
+package fnorm
 
 import (
 	"path/filepath"

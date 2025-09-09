@@ -17,8 +17,8 @@ A simple Go tool that normalizes file names according to consistent standards.
 ## Project Layout
 
 - `cmd/fnorm/main.go`: command-line entry point
-- `pkg/normalize/normalize.go`: library package providing `Normalize`
-- `pkg/normalize/normalize_test.go`: table-driven tests for normalization
+- `normalize.go`: library package providing `Normalize`
+- `normalize_test.go`: table-driven tests for normalization
 
 ## Installation
 
@@ -62,11 +62,11 @@ package main
 import (
     "fmt"
 
-    "github.com/laydros/fnorm/pkg/normalize"
+    "github.com/laydros/fnorm"
 )
 
 func main() {
-    fmt.Println(normalize.Normalize("My File.PDF"))
+    fmt.Println(fnorm.Normalize("My File.PDF"))
     // Output: my-file.pdf
 }
 ```
@@ -105,7 +105,7 @@ func main() {
 ## Benchmarks
 
 ```bash
-$ go test -bench . ./pkg/normalize
+$ go test -bench .
 BenchmarkNormalize-5      394693              3054 ns/op
 ```
 

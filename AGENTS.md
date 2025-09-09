@@ -46,8 +46,8 @@ go run . [flags] file1 [file2 ...]
 This project is organized into separate command and library packages:
 
 - **cmd/fnorm/main.go**: CLI entry point with flag parsing and file processing logic
-- **pkg/normalize/normalize.go**: Library package exporting the `Normalize` function
-- **pkg/normalize/normalize_test.go**: Table-driven tests for the normalization logic
+- **normalize.go**: Library package exporting the `Normalize` function
+- **normalize_test.go**: Table-driven tests for the normalization logic
 - **tools.go**: Development tool dependencies (build tag: tools)
 - **.golangci.yml**: Linter configuration
 
