@@ -1,4 +1,5 @@
 # fnorm - File Name Normalizer
+[![Go Reference](https://pkg.go.dev/badge/github.com/laydros/fnorm.svg)](https://pkg.go.dev/github.com/laydros/fnorm)
 
 A simple Go tool that normalizes file names according to consistent standards.
 
@@ -53,6 +54,23 @@ fnorm "File 1.jpg" "Another File.PNG" "Document (Copy).pdf"
 fnorm *.jpg
 ```
 
+## Library Usage
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/laydros/fnorm/internal/normalize"
+)
+
+func main() {
+    fmt.Println(normalize.Normalize("My File.PDF"))
+    // Output: my-file.pdf
+}
+```
+
 ## Rules Applied
 
 1. **Trim edges**: Leading/trailing spaces and dots are removed
@@ -83,6 +101,13 @@ fnorm *.jpg
 | `tcp/udp guide.md` | `tcp-or-udp-guide.md` |
 | `Résumé.txt` | `resume.txt` |
 | `rock’n’roll.txt` | `rock-n-roll.txt` |
+
+## Benchmarks
+
+```bash
+$ go test -bench . ./internal/normalize
+BenchmarkNormalize-5      394693              3054 ns/op
+```
 
 ## Flags
 
