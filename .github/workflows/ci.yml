@@ -17,7 +17,7 @@ jobs:
           gofmt -w $(git ls-files '*.go')
           git diff --exit-code
       - name: Go vet
-        run: go vet ./...
+        run: go vet -all ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
