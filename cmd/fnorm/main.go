@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -14,6 +15,7 @@ var (
 	version     = "dev" // Fallback version, overridden by ldflags from git tags
 	dryRun      = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
 	showVersion = flag.Bool("version", false, "Show version information")
+	errIsDir    = errors.New("is a directory")
 )
 
 func main() {
@@ -79,10 +81,10 @@ Examples:
 func processFile(filePath string) error {
 	info, err := os.Stat(filePath)
 	if err != nil {
-		return fmt.Errorf("file does not exist")
+		return fmt.Errorf("stat %s: %w", filePath, err)
 	}
 	if info.IsDir() {
-		return fmt.Errorf("skipping directory: %s", filePath)
+		return fmt.Errorf("skipping directory %s: %w", filePath, errIsDir)
 	}
 
 	// Split path into directory and filename
