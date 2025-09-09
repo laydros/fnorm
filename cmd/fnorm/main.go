@@ -52,11 +52,15 @@ func showHelp() {
 
 Usage: fnorm [flags] file1 [file2 ...]
 
-Normalizes file names according to standards:
+Normalizes file names to safe, consistent format:
   - Spaces become hyphens
   - Converted to lowercase
+  - Trims leading/trailing spaces and dots
+  - Special characters: / → -or-, & → -and-, @ → -at-, %% → -percent
   - Accented letters and typographic symbols simplified to ASCII
-  - Only letters, numbers, hyphens, underscores, periods allowed
+  - Forbidden characters replaced with hyphens
+  - Multiple consecutive hyphens collapsed to single hyphens
+  - Leading hyphens trimmed
 
 Flags:
   -dry-run    Show what would be renamed without making changes
@@ -65,7 +69,11 @@ Flags:
 
 Examples:
   fnorm "My Document.PDF"              # -> my-document.pdf
-  fnorm -dry-run "File With Spaces.txt"  # Shows preview
+  fnorm "Photo & Video.mov"            # -> photo-and-video.mov
+  fnorm "Meeting @ HQ.md"              # -> meeting-at-hq.md
+  fnorm "tcp/udp guide.txt"            # -> tcp-or-udp-guide.txt
+  fnorm "CPU Usage 90%%.log"            # -> cpu-usage-90-percent.log
+  fnorm -dry-run "File With Spaces.txt"  # Shows preview without changes
   fnorm *.jpg                          # Normalize all JPG files
 `)
 }

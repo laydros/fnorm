@@ -16,9 +16,11 @@ A simple Go tool that normalizes file names according to consistent standards.
 
 ## Project Layout
 
-- `cmd/fnorm/main.go`: command-line entry point
-- `normalize.go`: library package providing `Normalize`
-- `normalize_test.go`: table-driven tests for normalization
+- `cmd/fnorm/main.go`: CLI entry point with flag parsing and file processing logic
+- `normalize.go`: Library package (package fnorm) exporting the `Normalize` function
+- `normalize_test.go`: Table-driven tests for the normalization logic
+- `example_test.go`: Example usage tests
+- `normalize_bench_test.go`: Benchmarks
 
 ## Installation
 
@@ -186,7 +188,7 @@ A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and p
 
 Contributions are welcome. To keep the project consistent and easy to work with:
 
-- Use Go 1.24.3 or later.
+- Use Go 1.24 or later.
 - Run `make check` before submitting changes (runs fmt, vet, lint, and test).
 - Ensure all text files end with a trailing newline.
 - Update both `README.md` and `AGENTS.md` whenever your changes affect project behavior or contributor instructions.

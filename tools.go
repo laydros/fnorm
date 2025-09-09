@@ -1,12 +1,12 @@
 //go:build tools
 // +build tools
 
-// tools.go manages development tool dependencies.
-// This file is used to track tool dependencies with `go mod`.
+// tools.go documents development tool dependencies.
 // The tools build tag ensures this file is ignored in normal builds.
+// Tools are installed via `make tools` which uses `go install` with @latest.
 package main
 
-import (
-	// Static analysis and linting tools
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
-)
+// Development tools used by this project:
+//
+//   golangci-lint: Static analysis and linting
+//     Installation: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest

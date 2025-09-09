@@ -35,7 +35,7 @@ make install
 make clean
 
 # Run the tool directly without building
-go run . [flags] file1 [file2 ...]
+go run ./cmd/fnorm [flags] file1 [file2 ...]
 
 # Check version information
 ./fnorm -version
@@ -43,13 +43,17 @@ go run . [flags] file1 [file2 ...]
 
 ## Architecture
 
-This project is organized into separate command and library packages:
+This project follows idiomatic Go structure with library-first design:
 
+- **normalize.go**: Library package (package fnorm) exporting the `Normalize` function - can be imported by other Go projects
 - **cmd/fnorm/main.go**: CLI entry point with flag parsing and file processing logic
-- **normalize.go**: Library package exporting the `Normalize` function
 - **normalize_test.go**: Table-driven tests for the normalization logic
+- **example_test.go**: Example usage tests for documentation
+- **normalize_bench_test.go**: Performance benchmarks
 - **tools.go**: Development tool dependencies (build tag: tools)
 - **.golangci.yml**: Linter configuration
+
+Library import path: `github.com/laydros/fnorm`
 
 The normalization pipeline in `Normalize()`:
 
@@ -97,7 +101,7 @@ make check   # Verify everything works
 
 ## Project Standards
 
-- Go 1.24.3 or later required
+- Go 1.24 or later required
 - All text files must end with a single trailing newline
 - Run `make check` before committing changes (includes fmt, vet, lint, and test)
 - **Update both README.md and AGENTS.md when making changes that affect project behavior, usage, or contributor guidelines**

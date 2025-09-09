@@ -11,7 +11,7 @@ LDFLAGS=-ldflags "-X main.version=$(VERSION)"
 .DEFAULT_GOAL := build
 
 build:
-	go build $(LDFLAGS) -o $(BINARY_NAME) -v
+	go build $(LDFLAGS) -o $(BINARY_NAME) -v ./cmd/fnorm
 
 clean:
 	go clean
@@ -20,7 +20,7 @@ clean:
 	rm -f $(BINARY_WINDOWS)
 
 test:
-	go test -v
+	go test -v ./...
 
 coverage:
 	go test -coverprofile=coverage.out ./...
@@ -47,10 +47,10 @@ check: fmt vet lint test
 
 # Cross compilation
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BINARY_UNIX) -v
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(BINARY_UNIX) -v ./cmd/fnorm
 
 build-windows:
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BINARY_WINDOWS) -v
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BINARY_WINDOWS) -v ./cmd/fnorm
 
 build-all: build build-linux build-windows
 
