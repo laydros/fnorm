@@ -16,8 +16,8 @@ A simple Go tool that normalizes file names according to consistent standards.
 ## Project Layout
 
 - `cmd/fnorm/main.go`: command-line entry point
-- `pkg/fnorm/normalize.go`: library package providing `Normalize`
-- `pkg/fnorm/normalize_test.go`: table-driven tests for normalization
+- `internal/normalize/normalize.go`: library package providing `Normalize`
+- `internal/normalize/normalize_test.go`: table-driven tests for normalization
 
 ## Installation
 
