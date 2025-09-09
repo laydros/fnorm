@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	fnorm "github.com/laydros/fnorm/pkg/fnorm" //nolint:depguard // internal package import
+	normalize "github.com/laydros/fnorm/internal/normalize" //nolint:depguard // internal package import
 )
 
 var (
@@ -78,7 +78,7 @@ func processFile(filePath string) error {
 	dir := filepath.Dir(filePath)
 	filename := filepath.Base(filePath)
 
-	normalized := fnorm.Normalize(filename)
+	normalized := normalize.Normalize(filename)
 
 	// If no change is needed
 	if filename == normalized {

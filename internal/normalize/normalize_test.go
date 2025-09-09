@@ -1,4 +1,4 @@
-package fnorm
+package normalize
 
 import "testing"
 

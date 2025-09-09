@@ -35,7 +35,7 @@ This file tracks improvements to align the project with Go conventions and best 
   ```
 
 - [x] **Add function documentation** for all functions: ✅ _Completed - added proper Go doc comments_
-  - [x] `normalizeFilename` - Core normalization logic
+  - [x] `Normalize` - Core normalization logic
   - [x] `processFile` - File processing with error handling
   - [x] `showHelp` - Usage information display
 
@@ -49,7 +49,7 @@ This file tracks improvements to align the project with Go conventions and best 
   return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
   ```
 
-- [x] **Add validation** in normalizeFilename for edge cases
+- [x] **Add validation** in Normalize for edge cases
   - [x] Handle empty input strings
   - [x] Handle files starting/ending with dots
 
@@ -65,9 +65,9 @@ This file tracks improvements to align the project with Go conventions and best 
 - [x] **Create benchmark tests** (new file: normalize_bench_test.go)
 
   ```go
-  func BenchmarkNormalizeFilename(b *testing.B) {
+  func BenchmarkNormalize(b *testing.B) {
       for i := 0; i < b.N; i++ {
-          normalizeFilename("My Complex File Name (Copy) #1.PDF")
+          Normalize("My Complex File Name (Copy) #1.PDF")
       }
   }
   ```
@@ -76,22 +76,22 @@ This file tracks improvements to align the project with Go conventions and best 
 
 ### Project Layout (Standard Go Project)
 
-- [ ] **Create cmd directory structure**
-  - [ ] Move main.go → cmd/fnorm/main.go
-  - [ ] Create internal/normalize/ package
+- [x] **Create cmd directory structure**
+  - [x] Move main.go → cmd/fnorm/main.go
+  - [x] Create internal/normalize/ package
 
-- [ ] **Separate CLI from business logic**
-  - [ ] Create normalize.go in internal/normalize/
-  - [ ] Export Filename function
-  - [ ] Keep main.go focused on CLI concerns
+- [x] **Separate CLI from business logic**
+  - [x] Create normalize.go in internal/normalize/
+  - [x] Export Normalize function
+  - [x] Keep main.go focused on CLI concerns
 
 ### Additional Testing
 
-- [ ] **Add example tests** (example_test.go)
+- [x] **Add example tests** (example_test.go)
 
   ```go
-  func ExampleNormalizeFilename() {
-      result := normalizeFilename("My File.PDF")
+  func ExampleNormalize() {
+      result := Normalize("My File.PDF")
       fmt.Println(result)
       // Output: my-file.pdf
   }
