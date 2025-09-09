@@ -3,7 +3,7 @@ package normalize_test
 import (
 	"fmt"
 
-	normalize "github.com/laydros/fnorm/internal/normalize" //nolint:depguard // internal package import
+	"github.com/laydros/fnorm/pkg/normalize" //nolint:depguard // allow self import
 )
 
 func ExampleNormalize() {
