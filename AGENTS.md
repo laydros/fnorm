@@ -11,22 +11,22 @@ make build
 # Install development tools (run once)
 make tools
 
-# Run all quality checks (format, vet, lint, test)
+# Run all quality checks (format, vet, lint, test, test-integration)
 make check
 
 # Individual checks
-make test        # Run unit tests
-make coverage    # Run tests with coverage profile (library: 96%, CLI: 82.5%)
-make lint        # Run golangci-lint
-make fmt         # Format code
-make vet         # Run go vet -all
+make test             # Run unit tests
+make test-integration # Run integration tests (end-to-end CLI testing)
+make test-all         # Run both unit and integration tests
+make coverage         # Run tests with coverage profile (library: 96%, CLI: 82.5%)
+make lint             # Run golangci-lint
+make fmt              # Format code
+make vet              # Run go vet -all
 
 # Run tests
 go test -v
 go test -v -run TestNormalize  # Run specific test
-
-# Integration tests (end-to-end CLI testing)
-go test -v -tags integration ./cmd/fnorm
+go test -v -tags integration ./cmd/fnorm  # Integration tests
 
 # Build for all platforms
 make build-all
@@ -97,7 +97,7 @@ The project includes comprehensive testing at multiple levels:
 - **End-to-end tests** (`cmd/fnorm/integration_test.go`): Complete workflow testing using the compiled binary
 - Tests actual file operations, error handling, exit codes, and CLI behavior
 - Uses `os/exec` to build and run the actual binary as subprocess for true end-to-end testing
-- Run with: `go test -v -tags integration ./cmd/fnorm`
+- Run with: `make test-integration` or `go test -v -tags integration ./cmd/fnorm`
 
 ### Test Coverage
 - Space replacement, case conversion, forbidden character handling
@@ -124,9 +124,9 @@ make check   # Verify everything works
 
 - Go 1.24 or later required
 - All text files must end with a single trailing newline
-- Run `make check` before committing changes (includes fmt, vet, lint, and test)
+- Run `make check` before committing changes (includes fmt, vet, lint, test, and test-integration)
 - **Update both README.md and AGENTS.md when making changes that affect project behavior, usage, or contributor guidelines**
 
 ## CI
 
-A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet -all`, `golangci-lint run`, and `make coverage` on every push and pull request, uploading `coverage.out` as an artifact.
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet -all`, `golangci-lint run`, unit tests with coverage, and integration tests on every push and pull request, uploading `coverage.out` as an artifact.

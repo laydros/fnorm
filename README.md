@@ -156,17 +156,16 @@ make check  # runs fmt, vet, lint, and test
 ### Available Make Targets
 
 ```bash
-make build       # Build the binary
-make test        # Run unit tests
-make coverage    # Run tests with coverage report (library: 96%, CLI: 82.5%)
-make tools       # Install development tools
-make lint        # Run golangci-lint
-make fmt         # Format code
-make vet         # Run go vet -all
-make check       # Run all quality checks
-
-# Integration tests (end-to-end CLI testing)
-go test -v -tags integration ./cmd/fnorm
+make build            # Build the binary
+make test             # Run unit tests
+make test-integration # Run integration tests (end-to-end CLI testing)
+make test-all         # Run both unit and integration tests
+make coverage         # Run tests with coverage report (library: 96%, CLI: 82.5%)
+make tools            # Install development tools
+make lint             # Run golangci-lint
+make fmt              # Format code
+make vet              # Run go vet -all
+make check            # Run all quality checks (fmt, vet, lint, test, test-integration)
 ```
 
 ### Version Management
@@ -206,7 +205,7 @@ The project includes comprehensive testing at multiple levels:
 ### Integration Tests
 - **End-to-end tests** (`cmd/fnorm/integration_test.go`): Complete workflow testing using the compiled binary
 - Tests actual file operations, error handling, exit codes, and CLI behavior
-- Run with: `go test -v -tags integration ./cmd/fnorm`
+- Run with: `make test-integration` or `go test -v -tags integration ./cmd/fnorm`
 
 ### Benchmarks
 - Performance benchmarks in `normalize_bench_test.go`
@@ -214,7 +213,7 @@ The project includes comprehensive testing at multiple levels:
 
 ## CI
 
-A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and pull request. It ensures the codebase passes `go fmt`, `go vet -all`, `golangci-lint run`, and `make coverage` (tests with coverage).
+A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and pull request. It ensures the codebase passes `go fmt`, `go vet -all`, `golangci-lint run`, unit tests with coverage, and integration tests.
 
 ## Contributing
 

@@ -22,6 +22,11 @@ clean:
 test:
 	go test -v ./...
 
+test-integration:
+	go test -v -tags integration ./cmd/fnorm
+
+test-all: test test-integration
+
 coverage:
 	go test -coverprofile=coverage.out ./...
 
@@ -43,7 +48,7 @@ fmt:
 vet:
 	go vet -all ./...
 
-check: fmt vet lint test
+check: fmt vet lint test test-integration
 
 # Cross compilation
 build-linux:
@@ -57,5 +62,5 @@ build-all: build build-linux build-windows
 install: build
 	cp $(BINARY_NAME) ~/bin/
 
-.PHONY: build clean test coverage run tools lint fmt vet check build-linux build-windows build-all install
+.PHONY: build clean test test-integration test-all coverage run tools lint fmt vet check build-linux build-windows build-all install
 

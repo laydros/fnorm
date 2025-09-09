@@ -13,27 +13,27 @@ func TestShowVersion(t *testing.T) {
 	// Save original version and restore after test
 	originalVersion := version
 	defer func() { version = originalVersion }()
-	
+
 	version = "1.2.3-test"
-	
+
 	// Capture stdout
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	
+
 	// Set the version flag and run main
 	*showVersion = true
 	defer func() { *showVersion = false }()
-	
+
 	main()
-	
-	w.Close()
+
+	_ = w.Close()
 	os.Stdout = old
-	
+
 	var buf bytes.Buffer
 	_, _ = buf.ReadFrom(r)
 	output := buf.String()
-	
+
 	expected := "fnorm version 1.2.3-test\n"
 	if output != expected {
 		t.Errorf("Expected %q, got %q", expected, output)
@@ -45,16 +45,16 @@ func TestShowHelp(t *testing.T) {
 	old := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	
+
 	showHelp()
-	
-	w.Close()
+
+	_ = w.Close()
 	os.Stdout = old
-	
+
 	var buf bytes.Buffer
 	_, _ = buf.ReadFrom(r)
 	output := buf.String()
-	
+
 	// Check for key parts of the help text
 	expectedParts := []string{
 		"fnorm - File name normalizer",
@@ -63,7 +63,7 @@ func TestShowHelp(t *testing.T) {
 		"-version",
 		"Examples:",
 	}
-	
+
 	for _, part := range expectedParts {
 		if !strings.Contains(output, part) {
 			t.Errorf("Help output missing %q", part)
@@ -74,7 +74,7 @@ func TestShowHelp(t *testing.T) {
 func TestProcessFile(t *testing.T) {
 	// Create temporary directory for test files
 	tempDir := t.TempDir()
-	
+
 	tests := []struct {
 		name        string
 		filename    string
@@ -108,29 +108,29 @@ func TestProcessFile(t *testing.T) {
 			errorType:   errIsDir,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set dry-run flag
 			originalDryRun := *dryRun
 			*dryRun = tt.dryRun
 			defer func() { *dryRun = originalDryRun }()
-			
+
 			// Create test file or directory
 			testPath := filepath.Join(tempDir, tt.filename)
 			if tt.filename == "testdir" {
-				err := os.Mkdir(testPath, 0755)
+				err := os.Mkdir(testPath, 0750)
 				if err != nil {
 					t.Fatalf("Failed to create test directory: %v", err)
 				}
 			} else {
-				file, err := os.Create(testPath)
+				file, err := os.Create(testPath) // #nosec G304 -- test file path
 				if err != nil {
 					t.Fatalf("Failed to create test file: %v", err)
 				}
-				file.Close()
+				_ = file.Close()
 			}
-			
+
 			// Capture stdout/stderr
 			oldStdout := os.Stdout
 			oldStderr := os.Stderr
@@ -138,18 +138,18 @@ func TestProcessFile(t *testing.T) {
 			rErr, wErr, _ := os.Pipe()
 			os.Stdout = wOut
 			os.Stderr = wErr
-			
+
 			err := processFile(testPath)
-			
-			wOut.Close()
-			wErr.Close()
+
+			_ = wOut.Close()
+			_ = wErr.Close()
 			os.Stdout = oldStdout
 			os.Stderr = oldStderr
-			
+
 			var bufOut, bufErr bytes.Buffer
 			_, _ = bufOut.ReadFrom(rOut)
 			_, _ = bufErr.ReadFrom(rErr)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
@@ -161,7 +161,7 @@ func TestProcessFile(t *testing.T) {
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
 				}
-				
+
 				// Check output for expected messages
 				output := bufOut.String()
 				if tt.dryRun && tt.filename == "Dry Run Test.txt" {
@@ -190,28 +190,28 @@ func TestProcessFileNonExistent(t *testing.T) {
 
 func TestProcessFileTargetExists(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create source file that needs normalization
 	sourceFile := filepath.Join(tempDir, "Source File.txt")
-	file, err := os.Create(sourceFile)
+	file, err := os.Create(sourceFile) // #nosec G304 -- test file path
 	if err != nil {
 		t.Fatalf("Failed to create source file: %v", err)
 	}
-	file.Close()
-	
+	_ = file.Close()
+
 	// Create target file that would conflict
 	targetFile := filepath.Join(tempDir, "source-file.txt")
-	file, err = os.Create(targetFile)
+	file, err = os.Create(targetFile) // #nosec G304 -- test file path
 	if err != nil {
 		t.Fatalf("Failed to create target file: %v", err)
 	}
-	file.Close()
-	
+	_ = file.Close()
+
 	// Set dry-run to false
 	originalDryRun := *dryRun
 	*dryRun = false
 	defer func() { *dryRun = originalDryRun }()
-	
+
 	err = processFile(sourceFile)
 	if err == nil {
 		t.Error("Expected error when target file exists")
@@ -224,7 +224,7 @@ func TestProcessFileTargetExists(t *testing.T) {
 func TestMainLogic(t *testing.T) {
 	// Test the main function's logic by testing with flag.Args() directly
 	// This avoids the complexity of testing os.Exit behavior
-	
+
 	t.Run("no arguments", func(t *testing.T) {
 		// Save and restore flag state
 		oldArgs := flag.Args()
@@ -233,20 +233,20 @@ func TestMainLogic(t *testing.T) {
 			os.Args = append([]string{"fnorm"}, oldArgs...)
 			flag.Parse()
 		}()
-		
+
 		// Clear arguments
 		os.Args = []string{"fnorm"}
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 		dryRun = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
 		showVersion = flag.Bool("version", false, "Show version information")
 		flag.Parse()
-		
+
 		// Since we can't easily test os.Exit, we test that flag.Args() returns empty
 		args := flag.Args()
 		if len(args) != 0 {
 			t.Errorf("Expected no args, got %d args", len(args))
 		}
-		
+
 		// The main function would call os.Exit(1) here, but we can't test that directly
 		// The error message would be printed to stderr, which we've tested in other ways
 	})
@@ -254,17 +254,17 @@ func TestMainLogic(t *testing.T) {
 
 func TestMainWithFiles(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test files
 	testFiles := []string{"Test File 1.txt", "Test File 2.txt"}
 	for _, filename := range testFiles {
-		file, err := os.Create(filepath.Join(tempDir, filename))
+		file, err := os.Create(filepath.Join(tempDir, filename)) // #nosec G304 -- test file path
 		if err != nil {
 			t.Fatalf("Failed to create test file %s: %v", filename, err)
 		}
-		file.Close()
+		_ = file.Close()
 	}
-	
+
 	// Save original args and flags
 	originalArgs := os.Args
 	originalShowVersion := *showVersion
@@ -274,36 +274,36 @@ func TestMainWithFiles(t *testing.T) {
 		*showVersion = originalShowVersion
 		*dryRun = originalDryRun
 	}()
-	
+
 	// Reset flag state
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	dryRun = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
 	showVersion = flag.Bool("version", false, "Show version information")
-	
+
 	// Set up args with dry-run flag and test files
-	os.Args = []string{"fnorm", "-dry-run", 
+	os.Args = []string{"fnorm", "-dry-run",
 		filepath.Join(tempDir, testFiles[0]),
 		filepath.Join(tempDir, testFiles[1])}
-	
+
 	// Capture stdout
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-	
+
 	main()
-	
-	w.Close()
+
+	_ = w.Close()
 	os.Stdout = oldStdout
-	
+
 	var buf bytes.Buffer
 	_, _ = buf.ReadFrom(r)
 	output := buf.String()
-	
+
 	// Should contain dry-run output for both files
 	if !strings.Contains(output, "Would rename:") {
 		t.Errorf("Expected dry-run output, got: %q", output)
 	}
-	
+
 	// Count occurrences - should be one for each file
 	count := strings.Count(output, "Would rename:")
 	if count != 2 {
