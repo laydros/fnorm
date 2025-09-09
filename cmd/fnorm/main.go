@@ -34,10 +34,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Track whether any operations failed
+	var hasErrors bool
 	for _, arg := range args {
 		if err := processFile(arg); err != nil {
 			fmt.Fprintf(os.Stderr, "Error processing %s: %v\n", arg, err)
+			hasErrors = true
 		}
+	}
+
+	// Exit with appropriate code
+	if hasErrors {
+		os.Exit(1)
 	}
 }
 

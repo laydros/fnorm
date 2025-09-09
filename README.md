@@ -17,10 +17,12 @@ A simple Go tool that normalizes file names according to consistent standards.
 ## Project Layout
 
 - `cmd/fnorm/main.go`: CLI entry point with flag parsing and file processing logic
+- `cmd/fnorm/main_test.go`: Unit tests for CLI functions and logic
+- `cmd/fnorm/integration_test.go`: End-to-end integration tests using the compiled binary
 - `normalize.go`: Library package (package fnorm) exporting the `Normalize` function
 - `normalize_test.go`: Table-driven tests for the normalization logic
-- `example_test.go`: Example usage tests
-- `normalize_bench_test.go`: Benchmarks
+- `example_test.go`: Example usage tests for documentation
+- `normalize_bench_test.go`: Performance benchmarks
 
 ## Installation
 
@@ -111,6 +113,15 @@ $ go test -bench .
 BenchmarkNormalize-5      394693              3054 ns/op
 ```
 
+## Exit Codes
+
+The CLI follows standard Unix conventions for exit codes:
+
+- **Exit 0**: All operations completed successfully
+- **Exit 1**: At least one file operation failed (non-existent files, permission errors, target conflicts, etc.)
+
+The CLI processes all specified files and reports errors, but continues processing remaining files. At the end, it exits with the appropriate code to indicate overall success or failure for script automation.
+
 ## Flags
 
 - `-dry-run`: Preview changes without applying them
@@ -146,13 +157,16 @@ make check  # runs fmt, vet, lint, and test
 
 ```bash
 make build       # Build the binary
-make test        # Run tests
-make coverage    # Run tests with coverage report
+make test        # Run unit tests
+make coverage    # Run tests with coverage report (library: 96%, CLI: 82.5%)
 make tools       # Install development tools
 make lint        # Run golangci-lint
 make fmt         # Format code
 make vet         # Run go vet -all
 make check       # Run all quality checks
+
+# Integration tests (end-to-end CLI testing)
+go test -v -tags integration ./cmd/fnorm
 ```
 
 ### Version Management
@@ -179,6 +193,24 @@ make build  # Uses git describe --tags or "dev" as fallback
 - Dirty working directory adds "-dirty" suffix
 
 This project was developed with AI assistance.
+
+## Testing
+
+The project includes comprehensive testing at multiple levels:
+
+### Unit Tests
+- **Library tests** (`normalize_test.go`): Table-driven tests for the core normalization function with 96% coverage
+- **CLI tests** (`cmd/fnorm/main_test.go`): Unit tests for CLI functions with 82.5% coverage
+- **Example tests** (`example_test.go`): Documentation examples that verify API usage
+
+### Integration Tests
+- **End-to-end tests** (`cmd/fnorm/integration_test.go`): Complete workflow testing using the compiled binary
+- Tests actual file operations, error handling, exit codes, and CLI behavior
+- Run with: `go test -v -tags integration ./cmd/fnorm`
+
+### Benchmarks
+- Performance benchmarks in `normalize_bench_test.go`
+- Run with: `go test -bench .`
 
 ## CI
 
