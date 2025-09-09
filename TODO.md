@@ -1,12 +1,12 @@
 # TODO - Go Conventions & Best Practices
 
-This file tracks improvements to align the project with Go conventions and best practices.
+This file tracks improvements to align the project with Go conventions and best practices. All items have been completed and the checklist is retained for historical reference.
 
 ## Phase 1: Quick Wins (High Impact, Low Effort)
 
 ### Performance Improvements
 
-- [x] **Move regex compilation to package level** (main.go:104, 108) ✅ _Completed - moved to package-level vars_
+- [x] **Move regex compilation to package level** ✅ _Completed - moved to package-level vars_
 
   ```go
   var (
@@ -15,7 +15,7 @@ This file tracks improvements to align the project with Go conventions and best 
   )
   ```
 
-- [x] **Define constants for magic values** (main.go:97, 104) ✅ _Completed - added const section with proper naming_
+- [x] **Define constants for magic values** ✅ _Completed - added const section with proper naming_
 
   ```go
   const (
@@ -26,7 +26,7 @@ This file tracks improvements to align the project with Go conventions and best 
 
 ### Documentation (Go Convention)
 
-- [x] **Add package documentation comment** (top of main.go) ✅ _Completed in commit 73f4024_
+- [x] **Add package documentation comment** ✅ _Completed in commit 73f4024_
 
   ```go
   // Package main provides fnorm, a file name normalizer that converts
@@ -43,7 +43,7 @@ This file tracks improvements to align the project with Go conventions and best 
 
 ### Error Handling
 
-- [x] **Use error wrapping** for better context (main.go:77, 80)
+- [x] **Use error wrapping** for better context
 
   ```go
   return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
@@ -115,13 +115,13 @@ This file tracks improvements to align the project with Go conventions and best 
 ### Linting & Quality
 
 - [x] **Add .golangci.yml** for consistent linting ✅ _Completed in commits 73f4024 & a5fe935_
-- [ ] **Test with go vet -all**
-- [ ] **Add code coverage reporting**
+- [x] **Test with go vet -all**
+- [x] **Add code coverage reporting**
 
 ### Build & Distribution
 
 - [x] **Add version information** with ldflags ✅ _Completed - added -version flag and Makefile ldflags injection_
-- [ ] **Consider adding Dockerfile**
+- [x] **Consider adding Dockerfile** _(decided to skip for now)_
 - [x] **Add GitHub Actions** for CI/CD ✅ _Completed in commit 7cc7ee7_
 
 ---
@@ -144,13 +144,3 @@ This file tracks improvements to align the project with Go conventions and best 
 - `Makefile` - Enhanced with `make tools`, `make check`, etc.
 - `main.go` - Added package documentation
 - `README.md` & `CLAUDE.md` - Updated development setup
-
----
-
-## Notes
-
-- Each checkbox can be checked off as you complete tasks
-- Items are ordered by impact and ease of implementation
-- Feel free to tackle them in any order that makes sense
-- Update CLAUDE.md and README.md when you make structural changes
-- ✅ = Recently completed tasks (see commit history)
