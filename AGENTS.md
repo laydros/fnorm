@@ -52,14 +52,15 @@ This project is organized into separate command and library packages:
 
 The normalization pipeline in `Normalize()`:
 
-1. Separates extension from filename
+1. Separates extension from filename and trims leading/trailing spaces and dots
 2. Replaces spaces with hyphens
 3. Converts to lowercase
 4. Applies special character replacements (`/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent`)
-5. Replaces forbidden characters (anything not alphanumeric, hyphen, underscore, or period) with hyphens
-6. Collapses multiple consecutive hyphens
-7. Trims leading/trailing hyphens
-8. Lowercases the extension
+5. Transliterates accented characters and common typographic symbols (en/em dashes, smart quotes) to their ASCII equivalents
+6. Replaces forbidden characters (anything not alphanumeric, hyphen, underscore, or period) with hyphens
+7. Collapses multiple consecutive hyphens
+8. Trims leading hyphens
+9. Lowercases the extension
 
 ## Key Implementation Details
 
@@ -82,6 +83,7 @@ Tests use table-driven testing pattern with test cases covering:
 - Multiple hyphen collapse
 - Extension case normalization
 - Special character replacements
+- Edge cases (empty strings, files without extensions, multiple dots, unicode, leading/trailing spaces)
 
 ## Development Setup
 

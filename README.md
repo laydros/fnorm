@@ -10,6 +10,8 @@ A simple Go tool that normalizes file names according to consistent standards.
 - Cleans up multiple consecutive hyphens
 - Preserves file extensions
 - Applies special character replacements (`/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent`)
+- Transliterates accented characters and typographic symbols to ASCII equivalents
+- Trims leading/trailing spaces and dots
 
 ## Project Layout
 
@@ -53,12 +55,13 @@ fnorm *.jpg
 
 ## Rules Applied
 
-1. **Spaces → hyphens**: `My File.txt` → `my-file.txt`
-2. **Lowercase**: `Document.PDF` → `document.pdf`
-3. **Forbidden characters**: Replaced with hyphens
-4. **Allowed characters**: Letters, numbers, hyphens (-), underscores (_), periods (.)
-5. **Cleanup**: Multiple hyphens become single hyphens
-6. **Special Character Replacements**: uses the following replacements
+1. **Trim edges**: Leading/trailing spaces and dots are removed
+2. **Spaces → hyphens**: `My File.txt` → `my-file.txt`
+3. **Lowercase**: `Document.PDF` → `document.pdf`
+4. **Special Character Replacements**: uses the following replacements
+5. **Transliteration**: Accented characters and common typographic symbols become their ASCII equivalents, e.g. `café.txt` → `cafe.txt`, `rock’n’roll.txt` → `rock-n-roll.txt`
+6. **Forbidden characters**: Replaced with hyphens
+7. **Cleanup**: Multiple hyphens become single hyphens
 
 | Original | Replacement | Example |
 |----------|-------------|---------|
@@ -78,6 +81,8 @@ fnorm *.jpg
 | `Meeting @ Headquarters.md` | `meeting-at-headquarters.md` |
 | `CPU Usage 90%.txt` | `cpu-usage-90-percent.txt` |
 | `tcp/udp guide.md` | `tcp-or-udp-guide.md` |
+| `Résumé.txt` | `resume.txt` |
+| `rock’n’roll.txt` | `rock-n-roll.txt` |
 
 ## Flags
 

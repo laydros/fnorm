@@ -48,6 +48,7 @@ Usage: fnorm [flags] file1 [file2 ...]
 Normalizes file names according to standards:
   - Spaces become hyphens
   - Converted to lowercase
+  - Accented letters and typographic symbols simplified to ASCII
   - Only letters, numbers, hyphens, underscores, periods allowed
 
 Flags:
@@ -96,11 +97,11 @@ func processFile(filePath string) error {
 
 	// Check if target exists
 	if _, err := os.Stat(newPath); err == nil {
-		return fmt.Errorf("target file already exists: %s", normalized)
+		return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
 	}
 
 	if err := os.Rename(filePath, newPath); err != nil {
-		return fmt.Errorf("failed to rename: %v", err)
+		return fmt.Errorf("failed to rename %q to %q: %w", filePath, newPath, err)
 	}
 
 	fmt.Printf("Renamed: %s -> %s\n", filename, normalized)

@@ -43,26 +43,26 @@ This file tracks improvements to align the project with Go conventions and best 
 
 ### Error Handling
 
-- [ ] **Use error wrapping** for better context (main.go:77, 80)
+- [x] **Use error wrapping** for better context (main.go:77, 80)
 
   ```go
   return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
   ```
 
-- [ ] **Add validation** in normalizeFilename for edge cases
-  - [ ] Handle empty input strings
-  - [ ] Handle files starting/ending with dots
+- [x] **Add validation** in normalizeFilename for edge cases
+  - [x] Handle empty input strings
+  - [x] Handle files starting/ending with dots
 
 ### Testing Enhancements
 
-- [ ] **Add edge case tests** (normalize_test.go)
-  - [ ] Empty strings: `""` → `""`
-  - [ ] Files without extensions: `"README"` → `"readme"`
-  - [ ] Multiple dots: `"file.name.txt"` → `"file-name.txt"`
-  - [ ] Unicode characters: `"café.txt"` → `"caf-.txt"`
-  - [ ] Leading/trailing spaces: `" file "` → `"file"`
+- [x] **Add edge case tests** (normalize_test.go)
+  - [x] Empty strings: `""` → `""`
+  - [x] Files without extensions: `"README"` → `"readme"`
+  - [x] Multiple dots: `"file.name.txt"` → `"file.name.txt"`
+  - [x] Unicode characters: `"café.txt"` → `"cafe.txt"`
+  - [x] Leading/trailing spaces: `" file "` → `"file"`
 
-- [ ] **Create benchmark tests** (new file: normalize_bench_test.go)
+- [x] **Create benchmark tests** (new file: normalize_bench_test.go)
 
   ```go
   func BenchmarkNormalizeFilename(b *testing.B) {
