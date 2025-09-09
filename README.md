@@ -148,7 +148,7 @@ make test        # Run tests
 make tools       # Install development tools
 make lint        # Run golangci-lint
 make fmt         # Format code
-make vet         # Run go vet
+make vet         # Run go vet -all
 make check       # Run all quality checks
 ```
 
@@ -179,7 +179,7 @@ This project was developed with AI assistance.
 
 ## CI
 
-A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and pull request. It ensures the codebase passes `go fmt`, `go vet`, `golangci-lint run`, and `go test ./...`.
+A GitHub Actions workflow in `.github/workflows/ci.yml` runs on every push and pull request. It ensures the codebase passes `go fmt`, `go vet -all`, `golangci-lint run`, and `go test ./...`.
 
 ## Contributing
 

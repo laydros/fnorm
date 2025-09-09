@@ -18,7 +18,7 @@ make check
 make test        # Run tests
 make lint        # Run golangci-lint
 make fmt         # Format code
-make vet         # Run go vet
+make vet         # Run go vet -all
 
 # Run tests
 go test -v
@@ -103,4 +103,4 @@ make check   # Verify everything works
 
 ## CI
 
-A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet`, `golangci-lint run`, and `go test ./...` on every push and pull request.
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs `go fmt`, `go vet -all`, `golangci-lint run`, and `go test ./...` on every push and pull request.
