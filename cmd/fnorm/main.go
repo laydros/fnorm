@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	normalize "github.com/laydros/fnorm/internal/normalize" //nolint:depguard // internal package import
+	"github.com/laydros/fnorm/pkg/normalize" //nolint:depguard // allowed internal module import
 )
 
 var (

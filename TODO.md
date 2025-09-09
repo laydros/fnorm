@@ -78,10 +78,10 @@ This file tracks improvements to align the project with Go conventions and best 
 
 - [x] **Create cmd directory structure**
   - [x] Move main.go → cmd/fnorm/main.go
-  - [x] Create internal/normalize/ package
+  - [x] Create pkg/normalize/ package
 
 - [x] **Separate CLI from business logic**
-  - [x] Create normalize.go in internal/normalize/
+  - [x] Create normalize.go in pkg/normalize/
   - [x] Export Normalize function
   - [x] Keep main.go focused on CLI concerns
 
