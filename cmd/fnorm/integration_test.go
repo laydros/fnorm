@@ -403,8 +403,6 @@ func TestE2EComplexFilenames(t *testing.T) {
 		},
 		// TODO: Add test for hidden files with spaces - currently ".Hidden File" -> ".hidden file"
 		// (spaces not converted to hyphens). This may be a bug in the normalization function.
-		// TODO: Add test for case changes in filenames that work on case-insensitive filesystems
-		// (current tests fail on macOS/Windows due to case-insensitive filesystem conflicts)
 	}
 
 	for _, tt := range tests {
@@ -432,6 +430,182 @@ func TestE2EComplexFilenames(t *testing.T) {
 
 			// Clean up
 			os.Remove(expectedPath)
+		})
+	}
+}
+
+// TestE2ECaseOnlyRename tests renaming files that only differ in case
+// This was previously broken on case-insensitive filesystems like macOS/Windows
+func TestE2ECaseOnlyRename(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputFile    string
+		expectedFile string
+	}{
+		{
+			name:         "uppercase extension",
+			inputFile:    "document.TXT",
+			expectedFile: "document.txt",
+		},
+		{
+			name:         "uppercase filename",
+			inputFile:    "DOCUMENT.TXT",
+			expectedFile: "document.txt",
+		},
+		{
+			name:         "all uppercase",
+			inputFile:    "REPORT.DOC",
+			expectedFile: "report.doc",
+		},
+		{
+			name:         "mixed case filename",
+			inputFile:    "Report.PDF",
+			expectedFile: "report.pdf",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create unique temp dir for each test case
+			tempDir := t.TempDir()
+
+			// Create test file
+			inputPath := filepath.Join(tempDir, tt.inputFile)
+			if err := os.WriteFile(inputPath, []byte("test content"), 0644); err != nil {
+				t.Fatalf("Failed to create test file: %v", err)
+			}
+
+			// Run fnorm
+			stdout, stderr, err := runFnorm(inputPath)
+			if err != nil {
+				t.Fatalf("fnorm failed: %v\nstdout: %s\nstderr: %s", err, stdout, stderr)
+			}
+
+			// Check output message (should show rename)
+			if !strings.Contains(stdout, "Renamed:") {
+				t.Errorf("Expected 'Renamed:' in output, got: %q", stdout)
+			}
+
+			// Verify file exists with expected name
+			expectedPath := filepath.Join(tempDir, tt.expectedFile)
+			if _, err := os.Stat(expectedPath); err != nil {
+				t.Errorf("Expected file not found at %s: %v", expectedPath, err)
+			}
+
+			// For case-only renames on case-insensitive filesystems, we can't reliably
+			// check that the original path doesn't exist since it may refer to the same file.
+			// Instead, verify the file has the correct case by checking the directory listing.
+			entries, err := os.ReadDir(tempDir)
+			if err != nil {
+				t.Fatalf("Failed to read directory: %v", err)
+			}
+
+			found := false
+			for _, entry := range entries {
+				if entry.Name() == tt.expectedFile {
+					found = true
+					break
+				}
+			}
+			if !found {
+				var entryNames []string
+				for _, entry := range entries {
+					entryNames = append(entryNames, entry.Name())
+				}
+				t.Errorf("Expected file with correct case not found. Directory contents: %v", entryNames)
+			}
+
+			// Verify content is preserved
+			content, err := os.ReadFile(expectedPath)
+			if err != nil {
+				t.Fatalf("Failed to read renamed file: %v", err)
+			}
+			if string(content) != "test content" {
+				t.Errorf("File content changed after rename. Got: %q", string(content))
+			}
+		})
+	}
+}
+
+// TestE2ECaseAndContentRename tests files that have both case and content changes
+// These should use the regular rename path, not the case-only path
+func TestE2ECaseAndContentRename(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputFile    string
+		expectedFile string
+	}{
+		{
+			name:         "mixed case with spaces",
+			inputFile:    "My Document.TXT",
+			expectedFile: "my-document.txt",
+		},
+		{
+			name:         "camel case filename",
+			inputFile:    "MyFile.PDF",
+			expectedFile: "myfile.pdf",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create unique temp dir for each test case
+			tempDir := t.TempDir()
+
+			// Create test file
+			inputPath := filepath.Join(tempDir, tt.inputFile)
+			if err := os.WriteFile(inputPath, []byte("test content"), 0644); err != nil {
+				t.Fatalf("Failed to create test file: %v", err)
+			}
+
+			// Run fnorm
+			stdout, stderr, err := runFnorm(inputPath)
+			if err != nil {
+				t.Fatalf("fnorm failed: %v\nstdout: %s\nstderr: %s", err, stdout, stderr)
+			}
+
+			// Check output message (should show rename)
+			if !strings.Contains(stdout, "Renamed:") {
+				t.Errorf("Expected 'Renamed:' in output, got: %q", stdout)
+			}
+
+			// Verify file exists with expected name
+			expectedPath := filepath.Join(tempDir, tt.expectedFile)
+			if _, err := os.Stat(expectedPath); err != nil {
+				t.Errorf("Expected file not found at %s: %v", expectedPath, err)
+			}
+
+			// For renames involving case changes on case-insensitive filesystems, we can't reliably
+			// check that the original path doesn't exist since it may refer to the same file.
+			// Instead, verify the file has the correct name by checking the directory listing.
+			entries, err := os.ReadDir(tempDir)
+			if err != nil {
+				t.Fatalf("Failed to read directory: %v", err)
+			}
+
+			found := false
+			for _, entry := range entries {
+				if entry.Name() == tt.expectedFile {
+					found = true
+					break
+				}
+			}
+			if !found {
+				var entryNames []string
+				for _, entry := range entries {
+					entryNames = append(entryNames, entry.Name())
+				}
+				t.Errorf("Expected file with correct name not found. Directory contents: %v", entryNames)
+			}
+
+			// Verify content is preserved
+			content, err := os.ReadFile(expectedPath)
+			if err != nil {
+				t.Fatalf("Failed to read renamed file: %v", err)
+			}
+			if string(content) != "test content" {
+				t.Errorf("File content changed after rename. Got: %q", string(content))
+			}
 		})
 	}
 }

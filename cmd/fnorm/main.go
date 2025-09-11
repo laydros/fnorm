@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/laydros/fnorm" //nolint:depguard // allowed internal module import
 )
@@ -124,15 +125,56 @@ func processFile(filePath string) error {
 		return nil
 	}
 
-	// Check if target exists
-	if _, err := os.Stat(newPath); err == nil {
-		return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
-	}
+	// Check if this is a case-only change
+	if isCaseOnlyChange(filePath, newPath) {
+		// Use two-step rename for case-only changes to work on case-insensitive filesystems
+		if err := performCaseOnlyRename(filePath, newPath); err != nil {
+			return err
+		}
+	} else {
+		// Check if target exists (but only for non-case-only changes)
+		if _, err := os.Stat(newPath); err == nil {
+			return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
+		}
 
-	if err := os.Rename(filePath, newPath); err != nil {
-		return fmt.Errorf("failed to rename %q to %q: %w", filePath, newPath, err)
+		if err := os.Rename(filePath, newPath); err != nil {
+			return fmt.Errorf("failed to rename %q to %q: %w", filePath, newPath, err)
+		}
 	}
 
 	fmt.Printf("Renamed: %s -> %s\n", filename, normalized)
+	return nil
+}
+
+// isCaseOnlyChange returns true if the old and new paths differ only in case.
+// This helps detect when a rename is just changing case on case-insensitive filesystems.
+func isCaseOnlyChange(oldPath, newPath string) bool {
+	return strings.EqualFold(oldPath, newPath) && oldPath != newPath
+}
+
+// generateTempName creates a temporary filename by appending a suffix to avoid conflicts.
+func generateTempName(originalPath string) string {
+	return originalPath + ".fnorm-tmp"
+}
+
+// performCaseOnlyRename handles renaming files when only the case changes.
+// This uses a two-step process to work around case-insensitive filesystem limitations.
+func performCaseOnlyRename(oldPath, newPath string) error {
+	tempPath := generateTempName(oldPath)
+
+	// Step 1: Rename to temporary file
+	if err := os.Rename(oldPath, tempPath); err != nil {
+		return fmt.Errorf("failed to rename to temporary file %q: %w", tempPath, err)
+	}
+
+	// Step 2: Rename from temporary to final name
+	if err := os.Rename(tempPath, newPath); err != nil {
+		// Try to restore original file if second step fails
+		if restoreErr := os.Rename(tempPath, oldPath); restoreErr != nil {
+			return fmt.Errorf("failed to rename to %q and failed to restore original: %v (restore error: %v)", newPath, err, restoreErr)
+		}
+		return fmt.Errorf("failed to rename %q to %q: %w", tempPath, newPath, err)
+	}
+
 	return nil
 }

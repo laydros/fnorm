@@ -82,6 +82,7 @@ The normalization pipeline in `Normalize()`:
 - **Exit codes**: Exits 0 for success, 1 for any file processing failures (proper Unix CLI behavior)
 - Regular expressions handle character filtering and hyphen cleanup
 - Explicit mappings handle special character replacements (`/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent`)
+- **Case-only renames**: Uses a two-step rename process to handle case-only changes on case-insensitive filesystems (macOS, Windows)
 - Version management uses git tags with ldflags injection for builds
 
 ## Testing Approach
@@ -106,10 +107,10 @@ The project includes comprehensive testing at multiple levels:
 - Edge cases (empty strings, files without extensions, multiple dots, unicode, leading/trailing spaces)
 - CLI error scenarios, exit codes, dry-run mode, version display
 - File system operations and conflict handling
+- Case-only renames on both case-sensitive and case-insensitive filesystems
 
 ### Known Test Limitations
 - Hidden files with spaces currently normalize incorrectly (`.Hidden File` → `.hidden file` instead of `.hidden-file`)
-- Case-insensitive filesystem testing challenges on macOS/Windows for filename case changes
 
 ## Development Setup
 
