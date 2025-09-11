@@ -182,9 +182,20 @@ make build  # Uses git describe --tags or "dev" as fallback
 
 **For releases:**
 
-1. Create a git tag: `git tag v1.2.3`
-2. Build: `make build` (version will be `v1.2.3`)
-3. Push tag: `git push origin v1.2.3`
+1. Commit code
+2. Create a git tag: `git tag v1.2.3` (creates tag on current HEAD)
+3. Verify the tag: `git describe --tags --always` (should show `v1.2.3`)
+4. Build and test: `make build && ./fnorm -version` (version should be `v1.2.3`)
+5. Push tag: `git push origin v1.2.3`
+
+**If you need to fix a tag on the wrong commit:**
+
+```bash
+git tag -d v1.2.3        # Delete the tag locally
+git tag v1.2.3           # Recreate it on current HEAD
+git push origin :v1.2.3  # Delete from remote (if it was pushed)
+git push origin v1.2.3   # Push the corrected tag
+```
 
 **For development:**
 
