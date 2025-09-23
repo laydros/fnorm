@@ -1,0 +1,11 @@
+[package]
+name = "fnorm"
+version = "0.1.0"
+edition = "2024"
+description = "Filename normalization utility"
+authors = ["Jason Hamilton laydros.net"]
+license = "BSD 3-Clause License"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+anyhow = "1.0"
