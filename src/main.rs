@@ -6,6 +6,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 use error::FnormError;
+use normalize::normalize;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
