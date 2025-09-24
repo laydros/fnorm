@@ -54,6 +54,8 @@ Both commands produce an executable at `target/debug/fnorm` (or `target/release/
 
 `fnorm` accepts one or more file paths. By default it renames files in place; pass `--dry-run` to preview the changes without touching the filesystem.
 
+If you forget to supply a path, Clap reports the error and displays usage information for you.
+
 ```bash
 # Show command help
 cargo run -- --help
@@ -80,6 +82,12 @@ Unit tests live alongside the normalization logic. Run them with:
 ```bash
 cargo test
 ```
+
+If you need to execute the suite in an offline environment (such as Codex), run
+`./codex_setup.sh` once while you still have network access. The script vendors
+all dependencies into `./vendor` and writes a `.cargo/config.toml` that points
+Cargo at those local copies so `cargo test --offline` can succeed without
+contacting crates.io.
 
 Use `cargo test -- --nocapture` to stream any diagnostic output that tests emit.
 

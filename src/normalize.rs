@@ -8,32 +8,8 @@ pub fn normalize(filename: &str) -> String {
     // Step 2: Extension detection
     let (base_name, extension) = split_extension(filename.trim());
 
-    // Step 3: Whitespace and dot trimming (base name only)
-    let base = base_name.trim().trim_matches('.');
-
-    // Step 4: Space replacement (base name only)
-    let base = base.replace(' ', "-");
-
-    // Step 5: Lowercasing (base name only)
-    let mut base = base.to_lowercase();
-
-    // Step 6: Special token substitution (base name only)
-    base = base.replace('/', "-or-");
-    base = base.replace('&', "-and-");
-    base = base.replace('@', "-at-");
-    base = base.replace('%', "-percent-");
-
-    // Step 7: Transliteration (base name only)
-    base = transliterate(&base);
-
-    // Step 8: Forbidden character filtering (base name only)
-    base = filter_forbidden_chars(&base);
-
-    // Step 9: Hyphen cleanup (base name only)
-    base = cleanup_hyphens(&base);
-
-    // Step 10: Leading hyphen trim (base name only)
-    base = base.trim_start_matches('-').to_string();
+    // Steps 3-10: Normalization pipeline in a single pass for the base name
+    let base = normalize_base(base_name);
 
     // Step 11: Extension normalization
     let normalized_extension = extension.to_lowercase();
@@ -65,54 +41,54 @@ fn split_extension(filename: &str) -> (&str, &str) {
     }
 }
 
-/// Apply character transliteration according to the spec
-fn transliterate(text: &str) -> String {
-    let mut result = String::with_capacity(text.len() * 2); // Estimate capacity
+fn normalize_base(base_name: &str) -> String {
+    let trimmed = base_name.trim().trim_matches('.');
 
-    for ch in text.chars() {
-        let replacement = match ch {
-            // Accented vowels
-            'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' => "a",
-            'é' | 'è' | 'ê' | 'ë' => "e",
-            'í' | 'ì' | 'î' | 'ï' => "i",
-            'ó' | 'ò' | 'ô' | 'ö' | 'õ' => "o",
-            'ú' | 'ù' | 'û' | 'ü' => "u",
-            // Other special characters
-            'ñ' => "n",
-            'ç' => "c",
-            'æ' => "ae",
-            'œ' => "oe",
-            'ø' => "o",
-            'ß' => "ss",
-            // Dashes
-            '–' | '—' => "-", // en-dash, em-dash
-            // Curly quotes
-            '\u{2018}' | '\u{2019}' => "'",  // curly single quotes
-            '\u{201C}' | '\u{201D}' => "\"", // curly double quotes
-            // Default: keep the character
-            _ => {
-                result.push(ch);
-                continue;
-            }
-        };
-        result.push_str(replacement);
+    if trimmed.is_empty() {
+        return String::new();
     }
 
-    result
-}
+    let mut processed = String::with_capacity(trimmed.len() * 2);
 
-/// Filter out forbidden characters, replacing with hyphen
-fn filter_forbidden_chars(text: &str) -> String {
-    text.chars()
-        .map(|ch| {
-            if ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-' || ch == '_' || ch == '.'
-            {
-                ch
-            } else {
-                '-'
+    for ch in trimmed.chars() {
+        for lower in ch.to_lowercase() {
+            match lower {
+                ' ' => processed.push('-'),
+                '/' => processed.push_str("-or-"),
+                '&' => processed.push_str("-and-"),
+                '@' => processed.push_str("-at-"),
+                '%' => processed.push_str("-percent-"),
+                'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' => processed.push('a'),
+                'é' | 'è' | 'ê' | 'ë' => processed.push('e'),
+                'í' | 'ì' | 'î' | 'ï' => processed.push('i'),
+                'ó' | 'ò' | 'ô' | 'ö' | 'õ' => processed.push('o'),
+                'ú' | 'ù' | 'û' | 'ü' => processed.push('u'),
+                'ñ' => processed.push('n'),
+                'ç' => processed.push('c'),
+                'æ' => processed.push_str("ae"),
+                'œ' => processed.push_str("oe"),
+                'ø' => processed.push('o'),
+                'ß' => processed.push_str("ss"),
+                '–' | '—' => processed.push('-'),
+                '\u{2018}' | '\u{2019}' | '\u{201C}' | '\u{201D}' => processed.push('-'),
+                _ => {
+                    if lower.is_ascii_lowercase()
+                        || lower.is_ascii_digit()
+                        || lower == '-'
+                        || lower == '_'
+                        || lower == '.'
+                    {
+                        processed.push(lower);
+                    } else {
+                        processed.push('-');
+                    }
+                }
             }
-        })
-        .collect()
+        }
+    }
+
+    let cleaned = cleanup_hyphens(&processed);
+    cleaned.trim_start_matches('-').to_string()
 }
 
 /// Collapse consecutive hyphens into single hyphens
