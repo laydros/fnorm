@@ -54,6 +54,8 @@ Both commands produce an executable at `target/debug/fnorm` (or `target/release/
 
 `fnorm` accepts one or more file paths. By default it renames files in place; pass `--dry-run` to preview the changes without touching the filesystem.
 
+If you forget to supply a path, Clap reports the error and displays usage information for you.
+
 ```bash
 # Show command help
 cargo run -- --help
