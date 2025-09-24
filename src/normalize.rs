@@ -87,7 +87,7 @@ fn transliterate(text: &str) -> String {
             // Dashes
             '–' | '—' => "-", // en-dash, em-dash
             // Curly quotes
-            '\u{2018}' | '\u{2019}' => "'", // curly single quotes
+            '\u{2018}' | '\u{2019}' => "'",  // curly single quotes
             '\u{201C}' | '\u{201D}' => "\"", // curly double quotes
             // Default: keep the character
             _ => {
@@ -105,7 +105,8 @@ fn transliterate(text: &str) -> String {
 fn filter_forbidden_chars(text: &str) -> String {
     text.chars()
         .map(|ch| {
-            if ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-' || ch == '_' || ch == '.' {
+            if ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-' || ch == '_' || ch == '.'
+            {
                 ch
             } else {
                 '-'
@@ -198,14 +199,26 @@ mod tests {
 
     #[test]
     fn test_forbidden_characters() {
-        assert_eq!(normalize("file#with$special%chars.txt"), "file-with-special-percent-chars.txt");
-        assert_eq!(normalize("file(with)brackets[].txt"), "file-with-brackets-.txt");
-        assert_eq!(normalize("file\\with/slashes.txt"), "file-with-or-slashes.txt");
+        assert_eq!(
+            normalize("file#with$special%chars.txt"),
+            "file-with-special-percent-chars.txt"
+        );
+        assert_eq!(
+            normalize("file(with)brackets[].txt"),
+            "file-with-brackets-.txt"
+        );
+        assert_eq!(
+            normalize("file\\with/slashes.txt"),
+            "file-with-or-slashes.txt"
+        );
     }
 
     #[test]
     fn test_hyphen_cleanup() {
-        assert_eq!(normalize("file---with--multiple-hyphens.txt"), "file-with-multiple-hyphens.txt");
+        assert_eq!(
+            normalize("file---with--multiple-hyphens.txt"),
+            "file-with-multiple-hyphens.txt"
+        );
         assert_eq!(normalize("--leading-hyphens.txt"), "leading-hyphens.txt");
         assert_eq!(normalize("multiple   spaces.txt"), "multiple-spaces.txt");
     }
@@ -229,7 +242,10 @@ mod tests {
         assert_eq!(normalize("filename."), "filename");
 
         // Already normalized
-        assert_eq!(normalize("already-normalized.txt"), "already-normalized.txt");
+        assert_eq!(
+            normalize("already-normalized.txt"),
+            "already-normalized.txt"
+        );
 
         // Whitespace and dots
         assert_eq!(normalize("  .file name. "), "file-name");

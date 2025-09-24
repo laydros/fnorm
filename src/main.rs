@@ -54,11 +54,7 @@ fn main() -> Result<()> {
 }
 
 fn process_file(file: &PathBuf, dry_run: bool) -> Result<(), FnormError> {
-    // For now, just simulate the file processing
-    println!("Processing: {} (dry_run: {})", file.display(), dry_run);
-
-    // This is where you'll add the actual file processing logic later
-    // For now, just verify the file exists and is not a directory
+    // Step 1: Check if file exists and is not a directory
     let metadata = std::fs::metadata(file)
         .map_err(|_| FnormError::FileNotFound(file.display().to_string()))?;
 
@@ -66,6 +62,88 @@ fn process_file(file: &PathBuf, dry_run: bool) -> Result<(), FnormError> {
         return Err(FnormError::NotAFile(file.display().to_string()));
     }
 
-    println!("✓ {} (placeholder - no changes needed)", file.display());
+    // Step 2: Get the filename and compute normalized version
+    let filename = file
+        .file_name()
+        .ok_or_else(|| FnormError::FileNotFound("Invalid filename".to_string()))?
+        .to_string_lossy();
+
+    let normalized = normalize(&filename);
+
+    // Step 3: Determine if changes are needed
+    if filename == normalized {
+        // No changes needed
+        if !dry_run {
+            println!("✓ {} (no changes needed)", filename);
+        }
+        return Ok(());
+    }
+
+    // Step 4: Handle dry-run vs actual rename
+    if dry_run {
+        println!("Would rename: {} -> {}", filename, normalized);
+        return Ok(());
+    }
+
+    // Step 5: Construct target path
+    let mut target_path = file.clone();
+    target_path.set_file_name(&normalized);
+
+    // Step 6: Check for case-only rename
+    let is_case_only_rename = filename.to_lowercase() == normalized.to_lowercase();
+
+    if is_case_only_rename {
+        // Handle case-only rename with temporary file
+        rename_case_only(file, &target_path, &filename, &normalized)?;
+    } else {
+        // Regular rename - check if target exists first
+        if target_path.exists() {
+            return Err(FnormError::TargetExists(target_path.display().to_string()));
+        }
+
+        std::fs::rename(file, &target_path).map_err(|e| FnormError::RenameError {
+            from: file.display().to_string(),
+            to: target_path.display().to_string(),
+            source: e,
+        })?;
+
+        println!("Renamed: {} -> {}", filename, normalized);
+    }
+
     Ok(())
+}
+
+/// Handle case-only renames using a temporary file to work on case-insensitive filesystems
+fn rename_case_only(
+    source: &PathBuf,
+    target: &PathBuf,
+    old_name: &str,
+    new_name: &str,
+) -> Result<(), FnormError> {
+    let mut temp_path = source.clone();
+    temp_path.set_file_name(format!("{}.fnorm-tmp", old_name));
+
+    // Step 1: Rename to temporary
+    std::fs::rename(source, &temp_path).map_err(|e| FnormError::RenameError {
+        from: source.display().to_string(),
+        to: temp_path.display().to_string(),
+        source: e,
+    })?;
+
+    // Step 2: Rename from temporary to final name
+    match std::fs::rename(&temp_path, target) {
+        Ok(_) => {
+            println!("Renamed: {} -> {}", old_name, new_name);
+            Ok(())
+        }
+        Err(e) => {
+            // Restore original name if second step fails
+            let _ = std::fs::rename(&temp_path, source);
+            Err(FnormError::RenameError {
+                from: temp_path.display().to_string(),
+                to: target.display().to_string(),
+                source: e,
+            })
+        }
+    }
 }
