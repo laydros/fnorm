@@ -12,7 +12,7 @@ This document defines the externally observable behavior of the **fnorm** filena
 
 ### 2.1 Invocation Syntax
 
-```
+```shell
 fnorm [flags] file1 [file2 ...]
 ```
 
@@ -160,4 +160,3 @@ Running `fnorm` multiple times on the same set of files is idempotent: after the
 
 * Hidden files whose names consist solely of a leading dot followed by characters without another dot are not fully normalized: hyphenation and forbidden character replacement are not applied because the entire name is interpreted as the extension. Example: `.Hidden File` → `.hidden file` (space preserved).
 * The transliteration table is limited to the explicit runes listed in Section 3.7; other Unicode characters are reduced to hyphens by the forbidden-character filter.
-
