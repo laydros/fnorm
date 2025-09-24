@@ -83,6 +83,12 @@ Unit tests live alongside the normalization logic. Run them with:
 cargo test
 ```
 
+If you need to execute the suite in an offline environment (such as Codex), run
+`./codex_setup.sh` once while you still have network access. The script vendors
+all dependencies into `./vendor` and writes a `.cargo/config.toml` that points
+Cargo at those local copies so `cargo test --offline` can succeed without
+contacting crates.io.
+
 Use `cargo test -- --nocapture` to stream any diagnostic output that tests emit.
 
 ## Normalization Rules
