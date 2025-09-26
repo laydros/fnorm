@@ -40,6 +40,9 @@ make clean
 # Run the tool directly without building
 go run ./cmd/fnorm [flags] file1 [file2 ...]
 
+# Rename directories (requires --dirs flag)
+go run ./cmd/fnorm -dirs "My Directory"
+
 # Check version information
 ./fnorm -version
 ```
@@ -75,9 +78,10 @@ The normalization pipeline in `Normalize()`:
 ## Key Implementation Details
 
 - Uses Go's `flag` package for CLI argument parsing with built-in `-h`/`--help` support
+- The `-dirs` flag enables directory renaming (non-recursive)
 - The `-dry-run` flag allows previewing changes without applying them
 - The `-version` flag shows version information (injected at build time via ldflags)
-- File operations check for existing targets to prevent accidental overwrites
+- File and directory operations check for existing targets to prevent accidental overwrites
 - Error handling reports issues per-file without stopping batch operations
 - **Exit codes**: Exits 0 for success, 1 for any file processing failures (proper Unix CLI behavior)
 - Regular expressions handle character filtering and hyphen cleanup
@@ -108,6 +112,9 @@ The project includes comprehensive testing at multiple levels:
 - CLI error scenarios, exit codes, dry-run mode, version display
 - File system operations and conflict handling
 - Case-only renames on both case-sensitive and case-insensitive filesystems
+- Directory renaming with `--dirs` flag (non-recursive)
+- Directory dry-run mode and conflict handling
+- Directory case-only renames and content preservation
 
 ### Known Test Limitations
 - Hidden files with spaces currently normalize incorrectly (`.Hidden File` → `.hidden file` instead of `.hidden-file`)

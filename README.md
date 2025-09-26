@@ -1,7 +1,7 @@
 # fnorm - File Name Normalizer
 [![Go Reference](https://pkg.go.dev/badge/github.com/laydros/fnorm.svg)](https://pkg.go.dev/github.com/laydros/fnorm)
 
-A simple Go tool that normalizes file names according to consistent standards.
+A simple Go tool that normalizes file and directory names according to consistent standards.
 
 ## What it does
 
@@ -56,6 +56,13 @@ fnorm "File 1.jpg" "Another File.PNG" "Document (Copy).pdf"
 
 # Use with wildcards
 fnorm *.jpg
+
+# Rename directories (non-recursive)
+fnorm -dirs "My Documents"
+# Result: my-documents
+
+# Preview directory changes
+fnorm -dirs -dry-run "Project & Notes"
 ```
 
 ## Library Usage
@@ -104,7 +111,9 @@ func main() {
 | `CPU Usage 90%.txt` | `cpu-usage-90-percent.txt` |
 | `tcp/udp guide.md` | `tcp-or-udp-guide.md` |
 | `Résumé.txt` | `resume.txt` |
-| `rock’n’roll.txt` | `rock-n-roll.txt` |
+| `rock'n'roll.txt` | `rock-n-roll.txt` |
+| `My Documents` (directory) | `my-documents` |
+| `Project & Notes` (directory) | `project-and-notes` |
 
 ## Benchmarks
 
@@ -124,6 +133,7 @@ The CLI processes all specified files and reports errors, but continues processi
 
 ## Flags
 
+- `-dirs`: Allow renaming directories (non-recursive)
 - `-dry-run`: Preview changes without applying them
 - `-version`: Show version information
 - `-h`, `--help`: Show help message

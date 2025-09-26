@@ -82,6 +82,7 @@ func TestE2EHelp(t *testing.T) {
 			expectedParts := []string{
 				"fnorm - File name normalizer",
 				"Usage: fnorm [flags] file1 [file2 ...]",
+				"-dirs",
 				"-dry-run",
 				"-version",
 				"Examples:",
@@ -302,7 +303,7 @@ func TestE2ENonExistentFile(t *testing.T) {
 	}
 }
 
-// TestE2EDirectory tests that directories are skipped
+// TestE2EDirectory tests that directories are skipped without --dirs flag
 func TestE2EDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 
@@ -314,9 +315,9 @@ func TestE2EDirectory(t *testing.T) {
 
 	_, stderr, err := runFnorm(subDir)
 
-	// Should exit with error code 1 for directory
+	// Should exit with error code 1 for directory without --dirs flag
 	if err == nil {
-		t.Error("Expected error when processing directory")
+		t.Error("Expected error when processing directory without --dirs flag")
 	}
 	if exitErr, ok := err.(*exec.ExitError); ok {
 		if exitErr.ExitCode() != 1 {
@@ -327,6 +328,265 @@ func TestE2EDirectory(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "Error processing") && !strings.Contains(stderr, "directory") {
 		t.Errorf("Expected directory skip message, got stderr: %q, err: %v", stderr, err)
+	}
+}
+
+// TestE2EDirectoryRename tests directory renaming with --dirs flag
+func TestE2EDirectoryRename(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputDir     string
+		expectedDir  string
+		shouldRename bool
+	}{
+		{
+			name:         "spaces to hyphens",
+			inputDir:     "Test Directory",
+			expectedDir:  "test-directory",
+			shouldRename: true,
+		},
+		{
+			name:         "special characters",
+			inputDir:     "My Project & Notes @ 2024",
+			expectedDir:  "my-project-and-notes-at-2024",
+			shouldRename: true,
+		},
+		{
+			name:         "already normalized",
+			inputDir:     "already-normalized",
+			expectedDir:  "already-normalized",
+			shouldRename: false,
+		},
+		{
+			name:         "case normalization",
+			inputDir:     "PROJECT DOCUMENTS",
+			expectedDir:  "project-documents",
+			shouldRename: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create unique temp dir for each test case
+			tempDir := t.TempDir()
+
+			// Create test directory
+			inputPath := filepath.Join(tempDir, tt.inputDir)
+			if err := os.Mkdir(inputPath, 0755); err != nil {
+				t.Fatalf("Failed to create test directory: %v", err)
+			}
+
+			// Add some content to the directory
+			testFile := filepath.Join(inputPath, "test-file.txt")
+			if err := os.WriteFile(testFile, []byte("test content"), 0644); err != nil {
+				t.Fatalf("Failed to create test file in directory: %v", err)
+			}
+
+			// Run fnorm with --dirs flag
+			stdout, stderr, err := runFnorm("-dirs", inputPath)
+			if err != nil {
+				t.Fatalf("fnorm with --dirs failed: %v\nstdout: %s\nstderr: %s", err, stdout, stderr)
+			}
+
+			// Check output message
+			if tt.shouldRename {
+				if !strings.Contains(stdout, "Renamed:") {
+					t.Errorf("Expected 'Renamed:' in output, got: %q", stdout)
+				}
+			} else {
+				if !strings.Contains(stdout, "no changes needed") {
+					t.Errorf("Expected 'no changes needed' in output, got: %q", stdout)
+				}
+			}
+
+			// Verify directory exists with expected name
+			expectedPath := filepath.Join(tempDir, tt.expectedDir)
+			if _, err := os.Stat(expectedPath); err != nil {
+				t.Errorf("Expected directory not found at %s: %v", expectedPath, err)
+			}
+
+			// Verify original directory doesn't exist if it was renamed
+			if tt.shouldRename {
+				if _, err := os.Stat(inputPath); !os.IsNotExist(err) {
+					t.Errorf("Original directory still exists at %s", inputPath)
+				}
+			}
+
+			// Verify directory contents are preserved
+			expectedTestFile := filepath.Join(expectedPath, "test-file.txt")
+			if content, err := os.ReadFile(expectedTestFile); err != nil {
+				t.Errorf("Test file not found in renamed directory: %v", err)
+			} else if string(content) != "test content" {
+				t.Errorf("Directory content changed after rename. Got: %q", string(content))
+			}
+		})
+	}
+}
+
+// TestE2EDirectoryDryRun tests directory dry-run mode with --dirs flag
+func TestE2EDirectoryDryRun(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create test directory
+	testDir := "Test Dry Run Directory"
+	testPath := filepath.Join(tempDir, testDir)
+	if err := os.Mkdir(testPath, 0755); err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
+	}
+
+	// Run fnorm with --dirs and --dry-run
+	stdout, _, err := runFnorm("-dirs", "-dry-run", testPath)
+	if err != nil {
+		t.Fatalf("fnorm dry-run with --dirs failed: %v", err)
+	}
+
+	// Check output
+	if !strings.Contains(stdout, "Would rename:") {
+		t.Errorf("Expected 'Would rename:' in dry-run output, got: %q", stdout)
+	}
+	if !strings.Contains(stdout, "test-dry-run-directory") {
+		t.Errorf("Expected normalized name in output, got: %q", stdout)
+	}
+
+	// Verify directory was NOT renamed
+	if _, err := os.Stat(testPath); err != nil {
+		t.Errorf("Original directory should still exist in dry-run mode: %v", err)
+	}
+
+	normalizedPath := filepath.Join(tempDir, "test-dry-run-directory")
+	if _, err := os.Stat(normalizedPath); !os.IsNotExist(err) {
+		t.Errorf("Directory should not be renamed in dry-run mode")
+	}
+}
+
+// TestE2EDirectoryTargetExists tests directory renaming when target already exists
+func TestE2EDirectoryTargetExists(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create source directory
+	sourceDir := "Source Directory"
+	sourcePath := filepath.Join(tempDir, sourceDir)
+	if err := os.Mkdir(sourcePath, 0755); err != nil {
+		t.Fatalf("Failed to create source directory: %v", err)
+	}
+
+	// Create target directory that would conflict
+	targetDir := "source-directory"
+	targetPath := filepath.Join(tempDir, targetDir)
+	if err := os.Mkdir(targetPath, 0755); err != nil {
+		t.Fatalf("Failed to create target directory: %v", err)
+	}
+
+	_, stderr, err := runFnorm("-dirs", sourcePath)
+
+	// Should exit with error code 1 when target exists
+	if err == nil {
+		t.Error("Expected error when target directory already exists")
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		if exitErr.ExitCode() != 1 {
+			t.Errorf("Expected exit code 1, got %d", exitErr.ExitCode())
+		}
+	} else {
+		t.Errorf("Expected ExitError, got: %T", err)
+	}
+	if !strings.Contains(stderr, "Error processing") {
+		t.Errorf("Expected error for existing target, got stderr: %q, err: %v", stderr, err)
+	}
+	if !strings.Contains(stderr, "already exists") {
+		t.Errorf("Expected 'already exists' error, got stderr: %q, err: %v", stderr, err)
+	}
+
+	// Verify source directory still exists
+	if _, err := os.Stat(sourcePath); err != nil {
+		t.Error("Source directory should still exist after failed rename")
+	}
+}
+
+// TestE2EDirectoryCaseOnlyRename tests case-only directory renames
+func TestE2EDirectoryCaseOnlyRename(t *testing.T) {
+	tests := []struct {
+		name        string
+		inputDir    string
+		expectedDir string
+	}{
+		{
+			name:        "uppercase directory",
+			inputDir:    "DOCUMENTS",
+			expectedDir: "documents",
+		},
+		{
+			name:        "mixed case directory",
+			inputDir:    "MyProject",
+			expectedDir: "myproject",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create unique temp dir for each test case
+			tempDir := t.TempDir()
+
+			// Create test directory
+			inputPath := filepath.Join(tempDir, tt.inputDir)
+			if err := os.Mkdir(inputPath, 0755); err != nil {
+				t.Fatalf("Failed to create test directory: %v", err)
+			}
+
+			// Add some content to verify it's preserved
+			testFile := filepath.Join(inputPath, "test.txt")
+			if err := os.WriteFile(testFile, []byte("content"), 0644); err != nil {
+				t.Fatalf("Failed to create test file: %v", err)
+			}
+
+			// Run fnorm with --dirs
+			stdout, stderr, err := runFnorm("-dirs", inputPath)
+			if err != nil {
+				t.Fatalf("fnorm with --dirs failed: %v\nstdout: %s\nstderr: %s", err, stdout, stderr)
+			}
+
+			// Check output message (should show rename)
+			if !strings.Contains(stdout, "Renamed:") {
+				t.Errorf("Expected 'Renamed:' in output, got: %q", stdout)
+			}
+
+			// Verify directory exists with expected name
+			expectedPath := filepath.Join(tempDir, tt.expectedDir)
+			if _, err := os.Stat(expectedPath); err != nil {
+				t.Errorf("Expected directory not found at %s: %v", expectedPath, err)
+			}
+
+			// Verify the directory has the correct case by checking the directory listing
+			entries, err := os.ReadDir(tempDir)
+			if err != nil {
+				t.Fatalf("Failed to read directory: %v", err)
+			}
+
+			found := false
+			for _, entry := range entries {
+				if entry.Name() == tt.expectedDir && entry.IsDir() {
+					found = true
+					break
+				}
+			}
+			if !found {
+				var entryNames []string
+				for _, entry := range entries {
+					entryNames = append(entryNames, entry.Name())
+				}
+				t.Errorf("Expected directory with correct case not found. Directory contents: %v", entryNames)
+			}
+
+			// Verify content is preserved
+			expectedTestFile := filepath.Join(expectedPath, "test.txt")
+			content, err := os.ReadFile(expectedTestFile)
+			if err != nil {
+				t.Fatalf("Failed to read file in renamed directory: %v", err)
+			}
+			if string(content) != "content" {
+				t.Errorf("Directory content changed after rename. Got: %q", string(content))
+			}
+		})
 	}
 }
 

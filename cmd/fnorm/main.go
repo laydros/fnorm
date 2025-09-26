@@ -16,6 +16,7 @@ var (
 	version     = "dev" // Fallback version, overridden by ldflags from git tags
 	dryRun      = flag.Bool("dry-run", false, "Show what would be renamed without making changes")
 	showVersion = flag.Bool("version", false, "Show version information")
+	dirs        = flag.Bool("dirs", false, "Allow renaming directories (non-recursive)")
 	errIsDir    = errors.New("is a directory")
 )
 
@@ -72,6 +73,7 @@ Normalizes file names to safe, consistent format:
   - Leading hyphens trimmed
 
 Flags:
+  -dirs       Allow renaming directories (non-recursive)
   -dry-run    Show what would be renamed without making changes
   -version    Show version information
   -h, --help  Show this help message
@@ -84,10 +86,12 @@ Examples:
   fnorm "CPU Usage 90%%.log"            # -> cpu-usage-90-percent.log
   fnorm -dry-run "File With Spaces.txt"  # Shows preview without changes
   fnorm *.jpg                          # Normalize all JPG files
+  fnorm -dirs "My Documents"           # -> my-documents (directory)
+  fnorm -dirs "Project & Notes"        # -> project-and-notes (directory)
 `)
 }
 
-// processFile handles the renaming of a single file, checking for errors
+// processFile handles the renaming of a single file or directory, checking for errors
 // and respecting the dry-run flag.
 //
 // Example:
@@ -95,33 +99,36 @@ Examples:
 //	if err := processFile("My File.txt"); err != nil {
 //	        log.Fatal(err)
 //	}
+//	if err := processFile("My Directory"); err != nil {
+//	        log.Fatal(err)
+//	}
 func processFile(filePath string) error {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		return fmt.Errorf("stat %s: %w", filePath, err)
 	}
-	if info.IsDir() {
+	if info.IsDir() && !*dirs {
 		return fmt.Errorf("skipping directory %s: %w", filePath, errIsDir)
 	}
 
-	// Split path into directory and filename
-	dir := filepath.Dir(filePath)
-	filename := filepath.Base(filePath)
+	// Split path into parent directory and item name (file or directory)
+	parentDir := filepath.Dir(filePath)
+	itemName := filepath.Base(filePath)
 
-	normalized := fnorm.Normalize(filename)
+	normalized := fnorm.Normalize(itemName)
 
 	// If no change is needed
-	if filename == normalized {
+	if itemName == normalized {
 		if !*dryRun {
-			fmt.Printf("✓ %s (no changes needed)\n", filename)
+			fmt.Printf("✓ %s (no changes needed)\n", itemName)
 		}
 		return nil
 	}
 
-	newPath := filepath.Join(dir, normalized)
+	newPath := filepath.Join(parentDir, normalized)
 
 	if *dryRun {
-		fmt.Printf("Would rename: %s -> %s\n", filename, normalized)
+		fmt.Printf("Would rename: %s -> %s\n", itemName, normalized)
 		return nil
 	}
 
@@ -134,7 +141,7 @@ func processFile(filePath string) error {
 	} else {
 		// Check if target exists (but only for non-case-only changes)
 		if _, err := os.Stat(newPath); err == nil {
-			return fmt.Errorf("target file already exists %q: %w", normalized, os.ErrExist)
+			return fmt.Errorf("target already exists %q: %w", normalized, os.ErrExist)
 		}
 
 		if err := os.Rename(filePath, newPath); err != nil {
@@ -142,7 +149,7 @@ func processFile(filePath string) error {
 		}
 	}
 
-	fmt.Printf("Renamed: %s -> %s\n", filename, normalized)
+	fmt.Printf("Renamed: %s -> %s\n", itemName, normalized)
 	return nil
 }
 

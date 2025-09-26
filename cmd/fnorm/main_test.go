@@ -101,7 +101,7 @@ func TestProcessFile(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "directory should be skipped",
+			name:        "directory should be skipped without --dirs flag",
 			filename:    "testdir",
 			dryRun:      false,
 			expectError: true,
@@ -178,6 +178,124 @@ func TestProcessFile(t *testing.T) {
 	}
 }
 
+func TestProcessFileDirectories(t *testing.T) {
+	// Create temporary directory for test directories
+	tempDir := t.TempDir()
+
+	tests := []struct {
+		name        string
+		dirname     string
+		dirsFlag    bool
+		dryRun      bool
+		expectError bool
+		errorType   error
+	}{
+		{
+			name:        "directory rename with --dirs flag",
+			dirname:     "Test Directory",
+			dirsFlag:    true,
+			dryRun:      false,
+			expectError: false,
+		},
+		{
+			name:        "directory already normalized with --dirs flag",
+			dirname:     "already-normalized",
+			dirsFlag:    true,
+			dryRun:      false,
+			expectError: false,
+		},
+		{
+			name:        "directory dry run with --dirs flag",
+			dirname:     "Dry Run Directory",
+			dirsFlag:    true,
+			dryRun:      true,
+			expectError: false,
+		},
+		{
+			name:        "directory without --dirs flag should fail",
+			dirname:     "Should Fail Directory",
+			dirsFlag:    false,
+			dryRun:      false,
+			expectError: true,
+			errorType:   errIsDir,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set flags
+			originalDryRun := *dryRun
+			originalDirs := *dirs
+			*dryRun = tt.dryRun
+			*dirs = tt.dirsFlag
+			defer func() {
+				*dryRun = originalDryRun
+				*dirs = originalDirs
+			}()
+
+			// Create test directory
+			testPath := filepath.Join(tempDir, tt.dirname)
+			err := os.Mkdir(testPath, 0750)
+			if err != nil {
+				t.Fatalf("Failed to create test directory: %v", err)
+			}
+
+			// Capture stdout/stderr
+			oldStdout := os.Stdout
+			oldStderr := os.Stderr
+			rOut, wOut, _ := os.Pipe()
+			rErr, wErr, _ := os.Pipe()
+			os.Stdout = wOut
+			os.Stderr = wErr
+
+			err = processFile(testPath)
+
+			_ = wOut.Close()
+			_ = wErr.Close()
+			os.Stdout = oldStdout
+			os.Stderr = oldStderr
+
+			var bufOut, bufErr bytes.Buffer
+			_, _ = bufOut.ReadFrom(rOut)
+			_, _ = bufErr.ReadFrom(rErr)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+				}
+				if tt.errorType != nil && !strings.Contains(err.Error(), tt.errorType.Error()) {
+					t.Errorf("Expected error containing %q, got %q", tt.errorType.Error(), err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+
+				// Check output for expected messages
+				output := bufOut.String()
+				if tt.dryRun && tt.dirname == "Dry Run Directory" {
+					if !strings.Contains(output, "Would rename:") {
+						t.Errorf("Expected dry-run output, got: %q", output)
+					}
+				} else if tt.dirname == "already-normalized" {
+					if !strings.Contains(output, "no changes needed") {
+						t.Errorf("Expected 'no changes needed' output, got: %q", output)
+					}
+				} else if !tt.dryRun && tt.dirname == "Test Directory" {
+					// Check that the directory was actually renamed
+					expectedNewPath := filepath.Join(tempDir, "test-directory")
+					if _, err := os.Stat(expectedNewPath); os.IsNotExist(err) {
+						t.Errorf("Expected directory to be renamed to %s", expectedNewPath)
+					}
+					if !strings.Contains(output, "Renamed:") {
+						t.Errorf("Expected rename confirmation output, got: %q", output)
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestProcessFileNonExistent(t *testing.T) {
 	err := processFile("/nonexistent/file.txt")
 	if err == nil {
@@ -216,8 +334,44 @@ func TestProcessFileTargetExists(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error when target file exists")
 	}
-	if !strings.Contains(err.Error(), "target file already exists") {
-		t.Errorf("Expected 'target file already exists' error, got: %v", err)
+	if !strings.Contains(err.Error(), "target already exists") {
+		t.Errorf("Expected 'target already exists' error, got: %v", err)
+	}
+}
+
+func TestProcessDirectoryTargetExists(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create source directory that needs normalization
+	sourceDir := filepath.Join(tempDir, "Source Directory")
+	err := os.Mkdir(sourceDir, 0750)
+	if err != nil {
+		t.Fatalf("Failed to create source directory: %v", err)
+	}
+
+	// Create target directory that would conflict
+	targetDir := filepath.Join(tempDir, "source-directory")
+	err = os.Mkdir(targetDir, 0750)
+	if err != nil {
+		t.Fatalf("Failed to create target directory: %v", err)
+	}
+
+	// Set flags
+	originalDryRun := *dryRun
+	originalDirs := *dirs
+	*dryRun = false
+	*dirs = true
+	defer func() {
+		*dryRun = originalDryRun
+		*dirs = originalDirs
+	}()
+
+	err = processFile(sourceDir)
+	if err == nil {
+		t.Error("Expected error when target directory exists")
+	}
+	if !strings.Contains(err.Error(), "target already exists") {
+		t.Errorf("Expected 'target already exists' error, got: %v", err)
 	}
 }
 
