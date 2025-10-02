@@ -4,10 +4,6 @@ use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum FnormError {
-    NotAFile {
-        path: PathBuf,
-        source: io::Error,
-    },
     FileNotFound {
         path: PathBuf,
         source: io::Error,
@@ -25,9 +21,6 @@ pub enum FnormError {
 impl fmt::Display for FnormError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FnormError::NotAFile { path, .. } => {
-                write!(f, "skipping directory: {}: is a directory", path.display())
-            }
             FnormError::FileNotFound { path, .. } => {
                 write!(f, "file not found: {}", path.display())
             }
@@ -50,7 +43,6 @@ impl fmt::Display for FnormError {
 impl std::error::Error for FnormError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            FnormError::NotAFile { source, .. } => Some(source),
             FnormError::FileNotFound { source, .. } => Some(source),
             FnormError::RenameError { source, .. } => Some(source),
             FnormError::TargetExists { .. } => None,

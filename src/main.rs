@@ -1,7 +1,7 @@
 mod error;
 mod normalize;
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use std::error::Error as StdError;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -16,9 +16,14 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
     name = "fnorm",
     version = VERSION,
     about = "Normalize filenames to ASCII-only slug format",
-    long_about = "Convert filenames to normalized, ASCII-only slug format while retaining directory location and file extensions."
+    long_about = "Convert filenames to normalized, ASCII-only slug format while retaining directory location and file extensions.",
+    disable_version_flag = true
 )]
 struct Cli {
+    /// Print the version
+    #[arg(short = 'v', long = "version", action = ArgAction::Version)]
+    _version: bool,
+
     /// Print what would be done without making changes
     #[arg(long)]
     dry_run: bool,
@@ -88,17 +93,10 @@ fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
     use std::fs;
     use std::io::{self, ErrorKind};
 
-    let metadata = fs::metadata(path).map_err(|source| FnormError::FileNotFound {
+    fs::metadata(path).map_err(|source| FnormError::FileNotFound {
         path: path.to_path_buf(),
         source,
     })?;
-
-    if metadata.is_dir() {
-        return Err(FnormError::NotAFile {
-            path: path.to_path_buf(),
-            source: io::Error::new(ErrorKind::Other, "path is a directory"),
-        });
-    }
 
     let filename = path
         .file_name()
