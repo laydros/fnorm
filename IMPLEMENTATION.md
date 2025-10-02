@@ -33,7 +33,9 @@ None currently active.
 ### To Do 📋
 
 #### Step 1: Core Normalization Logic
+
 Implement the 12-step normalization algorithm in `src/normalize.rs`:
+
 - [ ] Extension detection using Rust equivalent of filepath.Ext
 - [ ] Whitespace and dot trimming (base name only)
 - [ ] Space replacement with hyphens
@@ -47,7 +49,9 @@ Implement the 12-step normalization algorithm in `src/normalize.rs`:
 - [ ] Reassembly of base name and extension
 
 #### Step 2: Comprehensive Tests
+
 Update tests in `src/normalize.rs`:
+
 - [ ] All examples from functional spec
 - [ ] Hidden file edge cases
 - [ ] Files without extensions
@@ -56,7 +60,9 @@ Update tests in `src/normalize.rs`:
 - [ ] Multiple hyphen collapse
 
 #### Step 3: Main Process Integration
+
 Update `src/main.rs`:
+
 - [ ] Call normalize function on file basenames
 - [ ] Implement actual file renaming
 - [ ] Handle dry-run mode properly
@@ -65,6 +71,7 @@ Update `src/main.rs`:
 - [ ] Error aggregation and exit codes
 
 #### Step 4: Real-world Testing
+
 - [ ] Create test files with various naming patterns
 - [ ] Verify case-insensitive filesystem handling
 - [ ] Test with directories (should error)
@@ -90,6 +97,7 @@ Update `src/main.rs`:
 ### Testing Strategy
 
 Run tests with:
+
 ```bash
 cargo test
 cargo test -- --nocapture  # To see println! output
@@ -114,6 +122,7 @@ cargo run -- --dry-run "My Document.PDF"
 ## Next Session Checklist
 
 When resuming development:
+
 1. Check this document for current status
 2. Review functional-spec.md for requirements
 3. Run `cargo test` to verify current state
@@ -121,6 +130,4 @@ When resuming development:
 
 ## Known Issues
 
-1. The placeholder normalize function uses underscores instead of hyphens (typo to fix)
-2. CI workflow still references Go commands (needs update after port complete)
-3. Hidden file handling needs special attention per functional spec deviation
+1. Hidden file handling needs special attention per functional spec deviation

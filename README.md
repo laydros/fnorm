@@ -3,6 +3,7 @@
 `fnorm` is a command-line tool and Rust library for normalizing filenames into an ASCII-only, slug-style format while preserving their extensions. It is a work-in-progress port of the original Go implementation and ships with a comprehensive functional specification to guide feature completion.
 
 ## Table of Contents
+
 - [Project Status](#project-status)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
@@ -18,6 +19,7 @@
 - [License](#license)
 
 ## Project Status
+
 The Rust port is feature-complete and includes:
 
 - A CLI with `--dry-run` and `--version` flags that processes both files and directories.
@@ -49,9 +51,12 @@ cargo build
 
 # Build an optimized binary
 cargo build --release
+
+# Install to $CARGO_HOME/bin for local use
+cargo install --path .
 ```
 
-Both commands produce an executable at `target/debug/fnorm` (or `target/release/fnorm`).
+Both build commands produce an executable at `target/debug/fnorm` (or `target/release/fnorm`).
 
 ### Run the CLI
 
