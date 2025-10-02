@@ -1,4 +1,5 @@
 /// Normalize a filename according to the fnorm rules
+#[must_use] 
 pub fn normalize(filename: &str) -> String {
     // Step 1: Empty input
     if filename.is_empty() {
@@ -18,12 +19,12 @@ pub fn normalize(filename: &str) -> String {
     if normalized_extension.is_empty() {
         base
     } else {
-        format!("{}.{}", base, normalized_extension)
+        format!("{base}.{normalized_extension}")
     }
 }
 
 /// Split a filename into base name and extension
-/// Returns (base_name, extension) where extension does not include the dot
+/// Returns (`base_name`, extension) where extension does not include the dot
 fn split_extension(filename: &str) -> (&str, &str) {
     if let Some(dot_pos) = filename.rfind('.') {
         if dot_pos == 0 {
@@ -53,7 +54,6 @@ fn normalize_base(base_name: &str) -> String {
     for ch in trimmed.chars() {
         for lower in ch.to_lowercase() {
             match lower {
-                ' ' => processed.push('-'),
                 '/' => processed.push_str("-or-"),
                 '&' => processed.push_str("-and-"),
                 '@' => processed.push_str("-at-"),
@@ -61,16 +61,16 @@ fn normalize_base(base_name: &str) -> String {
                 'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' => processed.push('a'),
                 'é' | 'è' | 'ê' | 'ë' => processed.push('e'),
                 'í' | 'ì' | 'î' | 'ï' => processed.push('i'),
-                'ó' | 'ò' | 'ô' | 'ö' | 'õ' => processed.push('o'),
+                'ó' | 'ò' | 'ô' | 'ö' | 'õ' | 'ø' => processed.push('o'),
                 'ú' | 'ù' | 'û' | 'ü' => processed.push('u'),
                 'ñ' => processed.push('n'),
                 'ç' => processed.push('c'),
                 'æ' => processed.push_str("ae"),
                 'œ' => processed.push_str("oe"),
-                'ø' => processed.push('o'),
                 'ß' => processed.push_str("ss"),
-                '–' | '—' => processed.push('-'),
-                '\u{2018}' | '\u{2019}' | '\u{201C}' | '\u{201D}' => processed.push('-'),
+                ' ' | '–' | '—' | '\u{2018}' | '\u{2019}' | '\u{201C}' | '\u{201D}' => {
+                    processed.push('-');
+                }
                 _ => {
                     if lower.is_ascii_lowercase()
                         || lower.is_ascii_digit()

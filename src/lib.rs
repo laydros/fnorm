@@ -37,7 +37,7 @@ fn rename_case_only(
     new_name: &str,
 ) -> Result<(), FnormError> {
     let mut temp_path = source.to_path_buf();
-    temp_path.set_file_name(format!("{}.fnorm-tmp", old_name));
+    temp_path.set_file_name(format!("{old_name}.fnorm-tmp"));
 
     // Step 1: Rename to temporary
     std::fs::rename(source, &temp_path).map_err(|e| FnormError::RenameError {
@@ -48,8 +48,8 @@ fn rename_case_only(
 
     // Step 2: Rename from temporary to final name
     match std::fs::rename(&temp_path, target) {
-        Ok(_) => {
-            println!("Renamed: {} -> {}", old_name, new_name);
+        Ok(()) => {
+            println!("Renamed: {old_name} -> {new_name}");
             Ok(())
         }
         Err(e) => {
@@ -85,13 +85,13 @@ fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
 
     if filename == normalized {
         if !dry_run {
-            println!("✓ {} (no changes needed)", filename);
+            println!("✓ {filename} (no changes needed)");
         }
         return Ok(());
     }
 
     if dry_run {
-        println!("Would rename: {} -> {}", filename, normalized);
+        println!("Would rename: {filename} -> {normalized}");
         return Ok(());
     }
 
@@ -113,12 +113,18 @@ fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
         source,
     })?;
 
-    println!("Renamed: {} -> {}", filename, normalized);
+    println!("Renamed: {filename} -> {normalized}");
 
     Ok(())
 }
 
-pub fn run(cli: Cli) -> Result<(), RunError> {
+/// Run the fnorm CLI application
+///
+/// # Errors
+///
+/// Returns `RunError` if any files fail to process. The error contains
+/// details about all files that failed.
+pub fn run(cli: &Cli) -> Result<(), RunError> {
     let mut errors = RunError::default();
 
     for file in &cli.files {
@@ -166,7 +172,7 @@ impl fmt::Display for RunError {
         for entry in &self.entries {
             writeln!(f, "  {}: {}", entry.path.display(), entry.error)?;
             if let Some(source) = StdError::source(&entry.error) {
-                writeln!(f, "    caused by: {}", source)?;
+                writeln!(f, "    caused by: {source}")?;
             }
         }
 

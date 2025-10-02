@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./fnorm:*)",
+      "Bash(tree:*)",
+      "Bash(make:*)",
+      "Bash(go test:*)",
+      "Read(//private/tmp/**)",
+      "Bash(cargo test:*)",
+      "Bash(cargo:*)",
+      "Bash(touch:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

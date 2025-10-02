@@ -43,8 +43,9 @@ impl fmt::Display for FnormError {
 impl std::error::Error for FnormError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            FnormError::FileNotFound { source, .. } => Some(source),
-            FnormError::RenameError { source, .. } => Some(source),
+            FnormError::FileNotFound { source, .. } | FnormError::RenameError { source, .. } => {
+                Some(source)
+            }
             FnormError::TargetExists { .. } => None,
         }
     }

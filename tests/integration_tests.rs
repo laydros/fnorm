@@ -22,7 +22,7 @@ fn run_fnorm(path: &Path, dry_run: bool) -> Result<(), String> {
         files: vec![path.to_path_buf()],
     };
 
-    fnorm::run(cli).map_err(|e| e.to_string())
+    fnorm::run(&cli).map_err(|e| e.to_string())
 }
 
 #[test]

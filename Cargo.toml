@@ -4,7 +4,11 @@ version = "0.2.2"
 edition = "2021"
 description = "Filename normalization utility"
 authors = ["Jason Hamilton <git@laydros.net>"]
-license = "BSD 3-Clause"
+license = "BSD-3-Clause"
+repository = "https://github.com/laydros/fnorm"
+homepage = "https://github.com/laydros/fnorm"
+keywords = ["filename", "normalization", "rename", "cli"]
+categories = ["command-line-utilities", "filesystem"]
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
