@@ -2,7 +2,7 @@
 mod error;
 mod normalize;
 
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use std::error::Error as StdError;
 use std::fmt;
 use std::path::{Path, PathBuf};
@@ -17,14 +17,9 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
     name = "fnorm",
     version = VERSION,
     about = "Normalize filenames to ASCII-only slug format",
-    long_about = "Convert filenames to normalized, ASCII-only slug format while retaining directory location and file extensions.",
-    disable_version_flag = true
+    long_about = "Convert filenames to normalized, ASCII-only slug format while retaining directory location and file extensions."
 )]
 pub struct Cli {
-    /// Print the version
-    #[arg(short = 'v', long = "version", action = ArgAction::Version)]
-    pub _version: bool,
-
     /// Print what would be done without making changes
     #[arg(long)]
     pub dry_run: bool,
