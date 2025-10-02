@@ -88,17 +88,10 @@ fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
     use std::fs;
     use std::io::{self, ErrorKind};
 
-    let metadata = fs::metadata(path).map_err(|source| FnormError::FileNotFound {
+    fs::metadata(path).map_err(|source| FnormError::FileNotFound {
         path: path.to_path_buf(),
         source,
     })?;
-
-    if metadata.is_dir() {
-        return Err(FnormError::NotAFile {
-            path: path.to_path_buf(),
-            source: io::Error::new(ErrorKind::Other, "path is a directory"),
-        });
-    }
 
     let filename = path
         .file_name()
