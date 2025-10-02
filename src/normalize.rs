@@ -1,5 +1,5 @@
 /// Normalize a filename according to the fnorm rules
-#[must_use] 
+#[must_use]
 pub fn normalize(filename: &str) -> String {
     // Step 1: Empty input
     if filename.is_empty() {

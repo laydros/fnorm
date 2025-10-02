@@ -1,5 +1,5 @@
 use clap::Parser;
-use fnorm::{Cli, RunError, run};
+use fnorm::{run, Cli, RunError};
 
 fn main() -> Result<(), RunError> {
     let cli = Cli::parse();
