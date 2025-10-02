@@ -18,10 +18,13 @@
 - [License](#license)
 
 ## Project Status
-The Rust port currently includes:
+The Rust port is feature-complete and includes:
 
-- A basic CLI with `--dry-run` support that iterates over paths and performs filesystem-safe renames.
-- A normalization library with unit tests covering the cases documented in the functional specification.
+- A CLI with `--dry-run` and `--version` flags that processes both files and directories.
+- Full support for directory renaming (added in v0.2.0).
+- A normalization library with comprehensive unit tests covering all cases from the functional specification.
+- Integration tests (15 tests) verifying file/directory rename operations, error handling, and dry-run mode.
+- Case-insensitive filesystem support with two-step rename logic for case-only changes.
 - Error types that provide human-readable diagnostics for common failure scenarios.
 
 Refer to [`IMPLEMENTATION.md`](IMPLEMENTATION.md) for a detailed checklist of remaining work and historical context for the port.
@@ -52,7 +55,7 @@ Both commands produce an executable at `target/debug/fnorm` (or `target/release/
 
 ### Run the CLI
 
-`fnorm` accepts one or more file paths. By default it renames files in place; pass `--dry-run` to preview the changes without touching the filesystem.
+`fnorm` accepts one or more file or directory paths. By default it renames paths in place; pass `--dry-run` to preview the changes without touching the filesystem.
 
 If you forget to supply a path, Clap reports the error and displays usage information for you.
 
@@ -60,8 +63,14 @@ If you forget to supply a path, Clap reports the error and displays usage inform
 # Show command help
 cargo run -- --help
 
-# Normalize two files in place
+# Show version
+cargo run -- --version
+
+# Normalize files in place
 cargo run -- path/to/file.txt another/Example.PDF
+
+# Normalize a directory
+cargo run -- "My Directory"
 
 # Preview changes without renaming
 cargo run -- --dry-run "My Document.PDF"
@@ -69,15 +78,20 @@ cargo run -- --dry-run "My Document.PDF"
 
 The CLI prints status messages such as:
 
-- `✓ <name> (no changes needed)` when a filename is already normalized.
+- `✓ <name> (no changes needed)` when a filename/directory is already normalized.
 - `Renamed: <old> -> <new>` for successful renames.
 - `Would rename: <old> -> <new>` in dry-run mode.
 
-Errors (missing files, directories, collisions, rename failures) are reported to standard error and cause a non-zero exit status if any occur.
+Errors (missing paths, collisions, rename failures) are reported to standard error and cause a non-zero exit status if any occur.
 
 ### Run the test suite
 
-Unit tests live alongside the normalization logic. Run them with:
+The project includes both unit tests and integration tests:
+
+- **Unit tests** (11 tests) in `src/normalize.rs` cover the normalization algorithm
+- **Integration tests** (15 tests) in `tests/integration_tests.rs` verify file/directory operations
+
+Run all tests with:
 
 ```bash
 cargo test
@@ -107,32 +121,37 @@ The specification also documents known edge cases, such as hidden files whose en
 ## Repository Layout
 
 ```
-├── Cargo.toml          # crate metadata and dependencies
+├── Cargo.toml                   # crate metadata and dependencies
 ├── src/
-│   ├── main.rs         # CLI entry point and file processing workflow
-│   ├── normalize.rs    # normalization algorithm and tests
-│   └── error.rs        # custom error types for user-facing diagnostics
-├── functional-spec.md  # authoritative behavior specification
-├── IMPLEMENTATION.md   # development log and TODO checklist
-└── LICENSE             # BSD 3-Clause license
+│   ├── main.rs                  # CLI entry point
+│   ├── lib.rs                   # library interface and file processing logic
+│   ├── normalize.rs             # normalization algorithm and unit tests
+│   └── error.rs                 # custom error types for user-facing diagnostics
+├── tests/
+│   └── integration_tests.rs     # integration tests for rename operations
+├── functional-spec.md           # authoritative behavior specification
+├── IMPLEMENTATION.md            # development log and TODO checklist
+└── LICENSE                      # BSD 3-Clause license
 ```
 
 ## Development Workflow
 
-### Implementing the remaining features
+### Implementing new features
 
-1. Pick the next unchecked item in [`IMPLEMENTATION.md`](IMPLEMENTATION.md).
-2. Update the code under `src/` and extend the tests in `src/normalize.rs` as needed.
-3. Run `cargo fmt`, `cargo clippy`, and `cargo test` before committing to keep the codebase tidy and verified.
-4. Commit logically grouped changes with descriptive messages.
+1. Update the code under `src/` and extend tests as needed.
+2. Add unit tests to `src/normalize.rs` for normalization logic changes.
+3. Add integration tests to `tests/integration_tests.rs` for file/directory operation changes.
+4. Run `cargo fmt`, `cargo clippy`, and `cargo test` before committing to keep the codebase tidy and verified.
+5. Commit logically grouped changes with descriptive messages.
 
-The current focus areas include finalizing normalization edge cases, expanding test coverage, and completing filesystem behaviors such as collision handling and case-only renames (already implemented in Rust but slated for further verification).
+The core functionality is complete. Future enhancements might include recursive directory processing, configuration files, or additional normalization rules.
 
 ### Coding standards
 
 - Use idiomatic Rust with clear error messages surfaced via `FnormError`.
 - Favor small, testable functions and keep normalization logic pure.
 - Ensure new behavior is exercised by unit tests or integration tests.
+- The project is structured as both a library (`src/lib.rs`) and binary (`src/main.rs`) to facilitate testing.
 
 ## Additional Documentation
 
