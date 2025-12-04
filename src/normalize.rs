@@ -1,6 +1,133 @@
-/// Normalize a filename according to the fnorm rules
+use std::collections::BTreeMap;
+use std::path::Path;
+
+use serde::Deserialize;
+
+use crate::error::ConfigError;
+
+/// User-provided configuration for the normalization pipeline.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NormalizationConfig {
+    pub special_tokens: BTreeMap<char, String>,
+    pub transliterations: BTreeMap<char, String>,
+    pub lowercase: bool,
+    pub lowercase_extension: bool,
+}
+
+impl Default for NormalizationConfig {
+    fn default() -> Self {
+        Self {
+            special_tokens: BTreeMap::from([
+                ('/', "-or-".to_string()),
+                ('&', "-and-".to_string()),
+                ('@', "-at-".to_string()),
+                ('%', "-percent-".to_string()),
+            ]),
+            transliterations: BTreeMap::from([
+                ('á', "a".to_string()),
+                ('à', "a".to_string()),
+                ('â', "a".to_string()),
+                ('ä', "a".to_string()),
+                ('ã', "a".to_string()),
+                ('å', "a".to_string()),
+                ('é', "e".to_string()),
+                ('è', "e".to_string()),
+                ('ê', "e".to_string()),
+                ('ë', "e".to_string()),
+                ('í', "i".to_string()),
+                ('ì', "i".to_string()),
+                ('î', "i".to_string()),
+                ('ï', "i".to_string()),
+                ('ó', "o".to_string()),
+                ('ò', "o".to_string()),
+                ('ô', "o".to_string()),
+                ('ö', "o".to_string()),
+                ('õ', "o".to_string()),
+                ('ø', "o".to_string()),
+                ('ú', "u".to_string()),
+                ('ù', "u".to_string()),
+                ('û', "u".to_string()),
+                ('ü', "u".to_string()),
+                ('ñ', "n".to_string()),
+                ('ç', "c".to_string()),
+                ('æ', "ae".to_string()),
+                ('œ', "oe".to_string()),
+                ('ß', "ss".to_string()),
+            ]),
+            lowercase: true,
+            lowercase_extension: true,
+        }
+    }
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct NormalizationOptions {
+    lowercase: Option<bool>,
+    lowercase_extension: Option<bool>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct NormalizationFileConfig {
+    #[serde(default)]
+    special_tokens: BTreeMap<String, String>,
+    #[serde(default)]
+    transliterations: BTreeMap<String, String>,
+    #[serde(default)]
+    options: NormalizationOptions,
+}
+
+impl NormalizationConfig {
+    pub fn from_toml_str(contents: &str) -> Result<Self, ConfigError> {
+        Self::from_toml_str_with_path(contents, None)
+    }
+
+    pub fn from_toml_str_with_path(
+        contents: &str,
+        path: Option<&Path>,
+    ) -> Result<Self, ConfigError> {
+        let parsed: NormalizationFileConfig = toml::from_str(contents).map_err(|error| {
+            path.map_or_else(
+                || ConfigError::from_parse_error(error),
+                |p| ConfigError::from_parse_error_with_path(p, error),
+            )
+        })?;
+        Self::apply_overrides(parsed)
+    }
+
+    fn apply_overrides(overrides: NormalizationFileConfig) -> Result<Self, ConfigError> {
+        let mut config = NormalizationConfig::default();
+
+        for (key, value) in overrides.special_tokens {
+            let ch = ConfigError::char_from_key("special_tokens", &key)?;
+            config.special_tokens.insert(ch, value);
+        }
+
+        for (key, value) in overrides.transliterations {
+            let ch = ConfigError::char_from_key("transliterations", &key)?;
+            config.transliterations.insert(ch, value);
+        }
+
+        if let Some(lowercase) = overrides.options.lowercase {
+            config.lowercase = lowercase;
+        }
+
+        if let Some(lowercase_extension) = overrides.options.lowercase_extension {
+            config.lowercase_extension = lowercase_extension;
+        }
+
+        Ok(config)
+    }
+}
+
+/// Normalize a filename according to the fnorm rules using the default configuration.
 #[must_use]
 pub fn normalize(filename: &str) -> String {
+    normalize_with_config(filename, &NormalizationConfig::default())
+}
+
+/// Normalize a filename using a provided configuration.
+#[must_use]
+pub fn normalize_with_config(filename: &str, config: &NormalizationConfig) -> String {
     // Step 1: Empty input
     if filename.is_empty() {
         return String::new();
@@ -10,10 +137,14 @@ pub fn normalize(filename: &str) -> String {
     let (base_name, extension) = split_extension(filename.trim());
 
     // Steps 3-10: Normalization pipeline in a single pass for the base name
-    let base = normalize_base(base_name);
+    let base = normalize_base(base_name, config);
 
     // Step 11: Extension normalization
-    let normalized_extension = extension.to_lowercase();
+    let normalized_extension = if config.lowercase_extension {
+        extension.to_lowercase()
+    } else {
+        extension.to_string()
+    };
 
     // Step 12: Reassembly
     if normalized_extension.is_empty() {
@@ -42,7 +173,7 @@ fn split_extension(filename: &str) -> (&str, &str) {
     }
 }
 
-fn normalize_base(base_name: &str) -> String {
+fn normalize_base(base_name: &str, config: &NormalizationConfig) -> String {
     let trimmed = base_name.trim().trim_matches('.');
 
     if trimmed.is_empty() {
@@ -52,27 +183,35 @@ fn normalize_base(base_name: &str) -> String {
     let mut processed = String::with_capacity(trimmed.len() * 2);
 
     for ch in trimmed.chars() {
-        for lower in ch.to_lowercase() {
+        let lower_iter: Box<dyn Iterator<Item = char>> = if config.lowercase {
+            Box::new(ch.to_lowercase())
+        } else {
+            Box::new(std::iter::once(ch))
+        };
+
+        for lower in lower_iter {
+            if let Some(replacement) = config.special_tokens.get(&lower) {
+                processed.push_str(replacement);
+                continue;
+            }
+
+            if let Some(replacement) = config.transliterations.get(&lower) {
+                processed.push_str(replacement);
+                continue;
+            }
+
             match lower {
-                '/' => processed.push_str("-or-"),
-                '&' => processed.push_str("-and-"),
-                '@' => processed.push_str("-at-"),
-                '%' => processed.push_str("-percent-"),
-                'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' => processed.push('a'),
-                'é' | 'è' | 'ê' | 'ë' => processed.push('e'),
-                'í' | 'ì' | 'î' | 'ï' => processed.push('i'),
-                'ó' | 'ò' | 'ô' | 'ö' | 'õ' | 'ø' => processed.push('o'),
-                'ú' | 'ù' | 'û' | 'ü' => processed.push('u'),
-                'ñ' => processed.push('n'),
-                'ç' => processed.push('c'),
-                'æ' => processed.push_str("ae"),
-                'œ' => processed.push_str("oe"),
-                'ß' => processed.push_str("ss"),
                 ' ' | '–' | '—' | '\u{2018}' | '\u{2019}' | '\u{201C}' | '\u{201D}' => {
                     processed.push('-');
                 }
                 _ => {
-                    if lower.is_ascii_lowercase()
+                    let is_allowed_letter = if config.lowercase {
+                        lower.is_ascii_lowercase()
+                    } else {
+                        lower.is_ascii_alphabetic()
+                    };
+
+                    if is_allowed_letter
                         || lower.is_ascii_digit()
                         || lower == '-'
                         || lower == '_'
@@ -186,6 +325,33 @@ mod tests {
         assert_eq!(
             normalize("file\\with/slashes.txt"),
             "file-with-or-slashes.txt"
+        );
+    }
+
+    #[test]
+    fn test_custom_config_overrides() {
+        let config = NormalizationConfig::from_toml_str(
+            r#"
+            [special_tokens]
+            "&" = "-plus-"
+
+            [transliterations]
+            "ø" = "oe"
+
+            [options]
+            lowercase = false
+            lowercase_extension = false
+            "#,
+        )
+        .expect("config should parse");
+
+        assert_eq!(
+            normalize_with_config("Mix&Match.FILE", &config),
+            "Mix-plus-Match.FILE"
+        );
+        assert_eq!(
+            normalize_with_config("Smørbrød.txt", &config),
+            "Smorbroed.txt"
         );
     }
 

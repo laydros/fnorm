@@ -79,6 +79,9 @@ cargo run -- "My Directory"
 
 # Preview changes without renaming
 cargo run -- --dry-run "My Document.PDF"
+
+# Use a custom config file
+cargo run -- --config ./fnorm.toml "My Document.PDF"
 ```
 
 The CLI prints status messages such as:
@@ -93,7 +96,7 @@ Errors (missing paths, collisions, rename failures) are reported to standard err
 
 The project includes both unit tests and integration tests:
 
-- **Unit tests** (11 tests) in `src/normalize.rs` cover the normalization algorithm
+- **Unit tests** (12 tests) in `src/normalize.rs` cover the normalization algorithm
 - **Integration tests** (15 tests) in `tests/integration_tests.rs` verify file/directory operations
 
 Run all tests with:
@@ -118,6 +121,28 @@ The normalization pipeline follows the twelve-step algorithm described in detail
 2. Replace spaces with hyphens and convert to lowercase.
 3. Substitute special tokens: `/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent-`.
 4. Transliterate select accented characters (e.g., `é` → `e`, `ß` → `ss`).
+
+## Configuration
+
+Pass `--config <path>` to supply a TOML file that customizes the normalization pipeline. All fields are optional; any values you provide override the built-in defaults.
+
+```toml
+[special_tokens]
+"&" = "-and-"
+"/" = "-slash-"
+
+[transliterations]
+"ø" = "oe"
+
+[options]
+lowercase = true
+lowercase_extension = true
+```
+
+- **special_tokens**: single-character keys mapped to replacement strings.
+- **transliterations**: single-character keys mapped to ASCII strings.
+- **options.lowercase**: whether to lowercase the base name (default: `true`).
+- **options.lowercase_extension**: whether to lowercase the extension (default: `true`).
 5. Replace any remaining unsupported characters with hyphens and collapse hyphen runs.
 6. Lowercase the file extension before reassembling the final name.
 
