@@ -25,7 +25,7 @@ cargo run -- --dry-run [files...]
 
 ### Testing
 ```bash
-# Run all tests (26 total: 11 unit + 15 integration)
+# Run all tests (27 total: 12 unit + 15 integration)
 cargo test
 
 # Run with output

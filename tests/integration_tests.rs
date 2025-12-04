@@ -19,6 +19,7 @@ fn run_fnorm(path: &Path, dry_run: bool) -> Result<(), String> {
 
     let cli = Cli {
         dry_run,
+        config: None,
         files: vec![path.to_path_buf()],
     };
 

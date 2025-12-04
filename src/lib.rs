@@ -7,8 +7,8 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-pub use error::FnormError;
-pub use normalize::normalize;
+pub use error::{ConfigError, FnormError};
+pub use normalize::{normalize, normalize_with_config, NormalizationConfig};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -23,6 +23,10 @@ pub struct Cli {
     /// Print what would be done without making changes
     #[arg(long)]
     pub dry_run: bool,
+
+    /// Path to a TOML config file that customizes normalization rules
+    #[arg(long)]
+    pub config: Option<PathBuf>,
 
     /// Files to normalize
     #[arg(value_name = "FILE", num_args = 1..)]
@@ -64,7 +68,11 @@ fn rename_case_only(
     }
 }
 
-fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
+fn process_file(
+    path: &Path,
+    dry_run: bool,
+    config: &NormalizationConfig,
+) -> Result<(), FnormError> {
     use std::fs;
     use std::io::{self, ErrorKind};
 
@@ -81,7 +89,7 @@ fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
         })?
         .to_string_lossy();
 
-    let normalized = normalize(&filename);
+    let normalized = normalize_with_config(&filename, config);
 
     if filename == normalized {
         if !dry_run {
@@ -124,11 +132,12 @@ fn process_file(path: &Path, dry_run: bool) -> Result<(), FnormError> {
 ///
 /// Returns `RunError` if any files fail to process. The error contains
 /// details about all files that failed.
-pub fn run(cli: &Cli) -> Result<(), RunError> {
+pub fn run(cli: &Cli) -> Result<(), AppError> {
+    let config = load_config(cli.config.as_deref()).map_err(AppError::Config)?;
     let mut errors = RunError::default();
 
     for file in &cli.files {
-        if let Err(error) = process_file(file, cli.dry_run) {
+        if let Err(error) = process_file(file, cli.dry_run, &config) {
             errors.push(file.clone(), error);
         }
     }
@@ -136,7 +145,20 @@ pub fn run(cli: &Cli) -> Result<(), RunError> {
     if errors.is_empty() {
         Ok(())
     } else {
-        Err(errors)
+        Err(AppError::Run(errors))
+    }
+}
+
+fn load_config(path: Option<&Path>) -> Result<NormalizationConfig, ConfigError> {
+    use std::fs;
+
+    match path {
+        Some(path) => {
+            let contents =
+                fs::read_to_string(path).map_err(|source| ConfigError::io(path.into(), source))?;
+            NormalizationConfig::from_toml_str_with_path(&contents, Some(path))
+        }
+        None => Ok(NormalizationConfig::default()),
     }
 }
 
@@ -181,3 +203,27 @@ impl fmt::Display for RunError {
 }
 
 impl std::error::Error for RunError {}
+
+#[derive(Debug)]
+pub enum AppError {
+    Config(ConfigError),
+    Run(RunError),
+}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AppError::Config(err) => write!(f, "{err}"),
+            AppError::Run(err) => write!(f, "{err}"),
+        }
+    }
+}
+
+impl std::error::Error for AppError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            AppError::Config(err) => Some(err),
+            AppError::Run(err) => Some(err),
+        }
+    }
+}
