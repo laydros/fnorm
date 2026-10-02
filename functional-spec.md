@@ -52,12 +52,12 @@ The utility attempts to process every provided argument even when some fail; it 
   * When processing a file fails, the error is recorded and processing continues with the remaining arguments. After all arguments have been attempted, a single summary is printed:
 
     ```
-    failed to process <N> path(s):
+    failed to process <N> paths:
       <path>: <detailed message>
         caused by: <system error>
     ```
 
-    One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found` (the path does not exist), `cannot access path` (any other failure to read the path, such as a permission error), `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>"`.
+    The header reads `failed to process 1 path:` when only one argument failed. One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found` (the path does not exist), `cannot access path` (any other failure to read the path, such as a permission error), `name normalizes to an empty name` (nothing would be left of the name, or only its extension; the path is left alone), `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>"`.
   * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>`, followed by `  caused by: <reason>` (the OS error or the TOML parse error), and exits with status 1 without processing any paths. A config key that is not a single character prints `invalid key "<key>" in <section>; use single-character keys` and exits the same way.
 
 ### 2.5 File Processing Algorithm
@@ -81,14 +81,14 @@ For each file argument after flag parsing:
 
 ## 3. Filename Normalization Rules
 
-The library function `fnorm::normalize(&str) -> String` performs the following deterministic transformation. The CLI uses the same function internally. These are the default rules; `--config` can change the replacement tables and whether the extension is lowercased (see the README).
+The library function `fnorm::normalize(&str) -> String` performs the following deterministic transformation. The CLI uses the same function internally. These are the default rules; `--config` can change the special-token and transliteration tables, whether the base name is lowercased, and whether the extension is lowercased (see the README).
 
 1. **Empty input** – Returns the empty string immediately.
-2. **Extension detection** – The extension is the substring from the final `.` to the end of the string. A lone trailing dot (`."`) is treated as no extension. The remainder before the extension becomes the *base name*.
-3. **Whitespace and dot trimming (base name only)** – Remove leading/trailing ASCII whitespace, then strip leading and trailing literal periods `.` from the base name. Interior dots are preserved.
+2. **Extension detection** – Remove leading and trailing whitespace from the whole name. The extension is then the substring from the final `.` to the end of the string. A lone trailing dot (`."`) is treated as no extension. The remainder before the extension becomes the *base name*.
+3. **Whitespace and dot trimming (base name only)** – Remove leading/trailing whitespace, then strip leading and trailing literal periods `.` from the base name. Interior dots are preserved.
 4. **Space replacement (base name only)** – Replace each literal space U+0020 with `-`.
 5. **Lowercasing (base name only)** – Convert the base name to lowercase using Unicode simple case folding.
-6. **Special token substitution (base name only)** – Replace the exact characters `/`, `&`, `@`, `%` with `-or-`, `-and-`, `-at-`, and `-percent` respectively. Replacements occur wherever the characters appear, even when introduced by earlier steps.
+6. **Special token substitution (base name only)** – Replace the exact characters `/`, `&`, `@`, `%` with `-or-`, `-and-`, `-at-`, and `-percent-` respectively. Replacements occur wherever the characters appear, even when introduced by earlier steps.
 7. **Transliteration (base name only)** – Replace each rune using the table below; characters not listed are left unchanged. The process is character-wise and not context-aware.
 
    | Source runes | Replacement |
@@ -116,7 +116,7 @@ The library function `fnorm::normalize(&str) -> String` performs the following d
 
 ### 3.1 Resulting Character Set
 
-After normalization, the filename will consist solely of lowercase ASCII letters, digits, hyphen, underscore, and period. Periods may separate the base name from the extension or remain in the base if originally present and permitted by the filtering rules. Hyphens never appear in sequence because of step 9.
+With the default rules, the normalized base name consists solely of lowercase ASCII letters, digits, hyphen, underscore, and period. The extension is only lowercased (step 11), so it can still contain other characters: `a.TX T` becomes `a.tx t`. Periods may separate the base name from the extension or remain in the base if originally present and permitted by the filtering rules. Hyphens never appear in sequence because of step 9.
 
 ### 3.2 Behavior of Special Cases
 
@@ -156,6 +156,7 @@ pub fn normalize_with_config(filename: &str, config: &NormalizationConfig) -> St
 | Argument path does not exist | Reports `<path>: file not found` (with `caused by: <system error>`) in the summary, marks failure. |
 | Argument path cannot be read (e.g., permission denied) | Reports `<path>: cannot access path` (with `caused by: <system error>`) in the summary, marks failure. |
 | Target normalized filename already exists | Reports `<path>: target file already exists: "<target>"` in the summary, marks failure. |
+| Name normalizes to nothing, or to only its extension (e.g., `!!!` or `!!!.txt`) | Reports `<path>: name normalizes to an empty name` in the summary, leaves the path alone, marks failure. Applies in dry-run mode too. |
 | Rename syscall failure | Reports `<path>: failed to rename "<from>" to "<to>"` (with `caused by: <system error>`) in the summary, marks failure. |
 
 ## 7. Determinism and Idempotence
