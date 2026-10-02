@@ -105,7 +105,7 @@ cargo fmt && cargo clippy && cargo test
 
 - **Error handling**: Use `FnormError` for specific errors, `RunError` for aggregation
 - **Testing**: Ensure all new functionality has corresponding tests
-- **Documentation**: Keep README.md, CLAUDE.md, and this file up to date
+- **Documentation**: Keep README.md and this file up to date
 - **Code style**: Follow idiomatic Rust patterns, keep functions small and testable
 
 ### Common Tasks
@@ -128,7 +128,6 @@ cargo fmt && cargo clippy && cargo test
 - **functional-spec.md** - Complete functional specification (authoritative source for behavior)
 - **IMPLEMENTATION.md** - Development log and TODO tracking
 - **README.md** - User-facing documentation
-- **CLAUDE.md** - Claude Code specific guidance
 
 ## Dependencies
 
