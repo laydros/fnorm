@@ -1,52 +1,54 @@
 # fnorm Functional Specification
 
-This document defines the externally observable behavior of the **fnorm** filename normalization tool and its accompanying Go library. It is intended to be sufficient for an independent implementation of the same functionality in another language or environment.
+This document defines the externally observable behavior of the **fnorm** filename normalization tool and its accompanying Rust library. It is intended to be sufficient for an independent implementation of the same functionality in another language or environment.
 
 ## 1. Overview
 
-*Purpose*: Convert one or more filesystem paths so that the file names conform to a normalized, ASCII-only slug format while retaining their directory location and file extensions. The program can be used as a command-line renaming utility or as a library function that returns the normalized name as a string.
+*Purpose*: Convert one or more filesystem paths so that the file and directory names conform to a normalized, ASCII-only slug format while retaining their directory location and file extensions. The program can be used as a command-line renaming utility or as a library function that returns the normalized name as a string.
 
-*Scope*: Only filename text is transformed; file contents are never modified. Directory names supplied as command arguments are rejected. Symbolic links are treated according to the underlying filesystem behavior of `os.Stat` (i.e., they are dereferenced).
+*Scope*: Only the name of each supplied path is transformed; file contents are never modified. Directories supplied as arguments are renamed like files, and their contents are left untouched; there is no recursion. Symbolic links are followed when checking that a path exists, and the link itself is renamed.
 
 ## 2. Command-Line Interface
 
 ### 2.1 Invocation Syntax
 
 ```shell
-fnorm [flags] file1 [file2 ...]
+fnorm [OPTIONS] <FILE>...
 ```
 
-* `file1 … fileN` – One or more file paths. Relative and absolute paths are accepted. Globs are expanded by the invoking shell, not by `fnorm`.
+* `<FILE>...` – One or more file or directory paths. At least one is required. Relative and absolute paths are accepted. Globs are expanded by the invoking shell, not by `fnorm`.
 
 ### 2.2 Flags
 
 | Flag | Effect |
 |------|--------|
-| `-dry-run` | Prints the rename that would occur for each file but leaves the filesystem unchanged. |
-| `-version` | Writes `fnorm version <value>` to standard output and exits with status 0 without processing file arguments. |
-| `-h`, `--help` | Emits the usage/help text produced by Go's `flag` package, which contains a description of the normalization rules, flag list, and examples. Exits with status 0. |
+| `--dry-run` | Prints the rename that would occur for each file but leaves the filesystem unchanged. |
+| `--config <path>` | Loads a TOML file that overrides the default normalization rules. The file format is documented in the README. |
+| `-V`, `--version` | Writes `fnorm <version>` to standard output and exits with status 0 without processing file arguments. |
+| `-h`, `--help` | Prints usage, the argument list and the option list, then exits with status 0. |
 
-No other flags are recognized. An unknown flag causes the standard Go `flag` parser error before `main` executes custom logic.
+No other flags are recognized. An unknown flag, or no file arguments, prints a usage error to standard error and exits with status 2 before any path is processed.
 
 ### 2.3 Exit Status
 
 | Status | Meaning |
 |--------|---------|
 | `0` | All supplied paths were processed successfully (including dry-run). |
-| `1` | At least one path failed to process (e.g., file missing, directory argument, target filename collision). |
+| `1` | At least one path failed to process (e.g., file missing, target filename collision), or the config file could not be read or parsed. |
+| `2` | Usage error: unknown flag or no file arguments. |
 
 The utility attempts to process every provided argument even when some fail; it only reports a non-zero exit after all paths have been attempted.
 
 ### 2.4 Output Streams
 
 * **Standard output** – Success messages and informational output:
-  * `fnorm version <value>` for `-version`.
+  * `fnorm <version>` for `--version`.
   * `Renamed: <old> -> <new>` when a rename occurs.
-  * `✓ <name> (no changes needed)` when a filename is already normalized and `-dry-run` is not set.
-  * `Would rename: <old> -> <new>` for `-dry-run` renames.
+  * `✓ <name> (no changes needed)` when a filename is already normalized and `--dry-run` is not set.
+  * `Would rename: <old> -> <new>` for `--dry-run` renames.
   * Dry-run mode does **not** emit a message for files that already satisfy the normalization rules.
 * **Standard error** – Diagnostic messages:
-  * When no positional arguments are supplied: prints `Error: No files specified` followed by a reminder to use help and exits with status 1.
+  * When no file arguments are supplied: prints `error: the following required arguments were not provided`, the usage line, and a pointer to `--help`, then exits with status 2.
   * When processing a file fails, the error is recorded and processing continues with the remaining arguments. After all arguments have been attempted, a single summary is printed:
 
     ```
@@ -56,33 +58,33 @@ The utility attempts to process every provided argument even when some fail; it 
     ```
 
     One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found` (the path does not exist), `cannot access path` (any other failure to read the path, such as a permission error), `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>"`.
-  * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>`, followed by `  caused by: <reason>` (the OS error or the TOML parse error), and exits with status 1 without processing any paths.
+  * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>`, followed by `  caused by: <reason>` (the OS error or the TOML parse error), and exits with status 1 without processing any paths. A config key that is not a single character prints `invalid key "<key>" in <section>; use single-character keys` and exits the same way.
 
 ### 2.5 File Processing Algorithm
 
 For each file argument after flag parsing:
 
-1. Call `os.Stat` on the supplied path.
-   * If the call fails (missing file, permission error, etc.), record the error, report it to stderr, and skip further work for that argument.
-   * If the path refers to a directory, report an error `skipping directory <path>: is a directory` and mark the operation as failed.
+1. Check that the supplied path exists, following symbolic links.
+   * If the check fails (missing file, permission error, etc.), record the error and skip further work for that argument. The error is reported in the summary at the end.
+   * Files and directories are handled the same way.
 2. Compute the normalized filename by applying the transformation rules in Section 3 to the basename (the directory component is preserved).
 3. Determine the rename strategy:
    * If the normalized name is identical to the original name:
      * In normal mode, print `✓ <name> (no changes needed)` to stdout.
      * In dry-run mode, print nothing.
-   * If a change is required and `-dry-run` is active, emit `Would rename: <old> -> <new>` and skip filesystem changes.
-   * If a change is required and `-dry-run` is not active:
-     * Detect case-only renames by comparing the old and new full paths with `strings.EqualFold`. For case-only renames, fail with `target file already exists` if the directory already contains an entry with the exact new name (a distinct file on a case-sensitive filesystem) or the temporary name; otherwise perform a two-step rename via a temporary `<original>.fnorm-tmp` filename to support case-insensitive filesystems. Restore the original name if the second step fails.
-     * For other renames, fail early if anything, including a dangling symlink, already exists at the target path (`os.Lstat` check) and report `target file already exists`.
-     * Apply `os.Rename` to move the file. Upon success, print `Renamed: <old> -> <new>`.
+   * If a change is required and `--dry-run` is active, emit `Would rename: <old> -> <new>` and skip filesystem changes.
+   * If a change is required and `--dry-run` is not active:
+     * Detect case-only renames by comparing the lowercased old and new names. For case-only renames, fail with `target file already exists` if the directory already contains an entry with the exact new name (a distinct file on a case-sensitive filesystem) or the temporary name; otherwise perform a two-step rename via a temporary `<original>.fnorm-tmp` filename to support case-insensitive filesystems. Restore the original name if the second step fails.
+     * For other renames, fail early if anything, including a dangling symlink, already exists at the target path (checked without following symbolic links) and report `target file already exists`.
+     * Rename the path. Upon success, print `Renamed: <old> -> <new>`.
 4. After all arguments are processed, exit with code 1 if any of the operations returned an error; otherwise exit 0.
 
 ## 3. Filename Normalization Rules
 
-The library function `fnorm.Normalize(string) string` performs the following deterministic transformation. The CLI uses the same function internally.
+The library function `fnorm::normalize(&str) -> String` performs the following deterministic transformation. The CLI uses the same function internally. These are the default rules; `--config` can change the replacement tables and whether the extension is lowercased (see the README).
 
 1. **Empty input** – Returns the empty string immediately.
-2. **Extension detection** – Determine the extension with Go's `filepath.Ext`. The extension is the substring from the final `.` to the end of the string. A lone trailing dot (`."`) is treated as no extension. The remainder before the extension becomes the *base name*.
+2. **Extension detection** – The extension is the substring from the final `.` to the end of the string. A lone trailing dot (`."`) is treated as no extension. The remainder before the extension becomes the *base name*.
 3. **Whitespace and dot trimming (base name only)** – Remove leading/trailing ASCII whitespace, then strip leading and trailing literal periods `.` from the base name. Interior dots are preserved.
 4. **Space replacement (base name only)** – Replace each literal space U+0020 with `-`.
 5. **Lowercasing (base name only)** – Convert the base name to lowercase using Unicode simple case folding.
@@ -125,13 +127,13 @@ After normalization, the filename will consist solely of lowercase ASCII letters
 
 ## 4. Library API Contract
 
-```
-package fnorm
-func Normalize(filename string) string
+```rust
+pub fn normalize(filename: &str) -> String
+pub fn normalize_with_config(filename: &str, config: &NormalizationConfig) -> String
 ```
 
 * Pure function: produces the same output for the same input and has no side effects.
-* Accepts any UTF-8 string and returns a normalized filename per Section 3.
+* Accepts any UTF-8 string and returns a normalized filename per Section 3. `normalize_with_config` applies the same steps with a custom `NormalizationConfig`.
 * Intended for consumer code that wants to derive a normalized string without performing filesystem operations.
 
 ## 5. Examples
@@ -150,7 +152,7 @@ func Normalize(filename string) string
 
 | Condition | Behavior |
 |-----------|----------|
-| No positional arguments | Prints error about missing files, exit status 1. |
+| No file arguments | Prints a usage error, exit status 2. |
 | Argument path does not exist | Reports `<path>: file not found` (with `caused by: <system error>`) in the summary, marks failure. |
 | Argument path cannot be read (e.g., permission denied) | Reports `<path>: cannot access path` (with `caused by: <system error>`) in the summary, marks failure. |
 | Target normalized filename already exists | Reports `<path>: target file already exists: "<target>"` in the summary, marks failure. |
@@ -167,4 +169,4 @@ Running `fnorm` multiple times on the same set of files is idempotent: after the
 
 ## 9. Known Limitations
 
-* The transliteration table is limited to the explicit runes listed in Section 3.7; other Unicode characters are reduced to hyphens by the forbidden-character filter.
+* The transliteration table is limited to the explicit runes listed in Section 3, step 7 (plus any added by `--config`); other Unicode characters are reduced to hyphens by the forbidden-character filter.
