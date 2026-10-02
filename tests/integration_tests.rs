@@ -314,3 +314,65 @@ fn test_cli_reports_errors_with_display_and_exit_code() {
     assert!(stderr.contains("file not found"), "stderr: {stderr}");
     assert!(!stderr.contains("RunError"), "stderr: {stderr}");
 }
+
+fn run_fnorm_binary(args: &[&std::ffi::OsStr]) -> (Option<i32>, String) {
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_fnorm"))
+        .args(args)
+        .output()
+        .expect("Failed to run fnorm binary");
+    (
+        output.status.code(),
+        String::from_utf8_lossy(&output.stderr).into_owned(),
+    )
+}
+
+#[test]
+fn test_config_parse_error_shows_reason() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let config = temp_dir.path().join("bad.toml");
+    fs::write(&config, "bad = [").expect("Failed to write config");
+    let file = create_test_path(temp_dir.path(), "Some File.txt", false);
+
+    let (code, stderr) =
+        run_fnorm_binary(&["--config".as_ref(), config.as_os_str(), file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(
+        stderr.contains("failed to parse config"),
+        "stderr: {stderr}"
+    );
+    assert!(stderr.contains("line 1"), "stderr: {stderr}");
+    assert!(
+        file.exists(),
+        "File must not be processed when config fails"
+    );
+}
+
+#[test]
+fn test_config_read_error_shows_os_error() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let config = temp_dir.path().join("missing.toml");
+    let file = create_test_path(temp_dir.path(), "Some File.txt", false);
+
+    let (code, stderr) =
+        run_fnorm_binary(&["--config".as_ref(), config.as_os_str(), file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("failed to read config"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("No such file or directory"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_file_not_found_names_path_once() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let missing = temp_dir.path().join("Missing File.txt");
+
+    let (code, stderr) = run_fnorm_binary(&[missing.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    let shown = missing.display().to_string();
+    assert_eq!(stderr.matches(&shown).count(), 1, "stderr: {stderr}");
+}
