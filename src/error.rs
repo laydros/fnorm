@@ -57,6 +57,7 @@ pub enum FnormError {
     TargetExists {
         path: PathBuf,
     },
+    EmptyName,
     RenameError {
         from: PathBuf,
         to: PathBuf,
@@ -77,6 +78,7 @@ impl fmt::Display for FnormError {
             FnormError::TargetExists { path } => {
                 write!(f, "target file already exists: \"{}\"", path.display())
             }
+            FnormError::EmptyName => write!(f, "name normalizes to an empty name"),
             FnormError::RenameError { from, to, .. } => {
                 write!(
                     f,
@@ -115,7 +117,7 @@ impl std::error::Error for FnormError {
             FnormError::FileNotFound { source, .. } | FnormError::RenameError { source, .. } => {
                 Some(source)
             }
-            FnormError::TargetExists { .. } => None,
+            FnormError::TargetExists { .. } | FnormError::EmptyName => None,
         }
     }
 }

@@ -123,6 +123,11 @@ fn process_file(
 
     let normalized = normalize_with_config(&filename, config);
 
+    // A visible name whose base normalizes away would become empty or hidden
+    if normalized.is_empty() || (normalized.starts_with('.') && !filename.starts_with('.')) {
+        return Err(FnormError::EmptyName);
+    }
+
     if filename == normalized {
         if !dry_run {
             println!("✓ {filename} (no changes needed)");
