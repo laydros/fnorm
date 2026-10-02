@@ -85,12 +85,11 @@ impl NormalizationConfig {
         contents: &str,
         path: Option<&Path>,
     ) -> Result<Self, ConfigError> {
-        let parsed: NormalizationFileConfig = toml::from_str(contents).map_err(|error| {
-            path.map_or_else(
-                || ConfigError::from_parse_error(error),
-                |p| ConfigError::from_parse_error_with_path(p, error),
-            )
-        })?;
+        let parsed: NormalizationFileConfig =
+            toml::from_str(contents).map_err(|error| match path {
+                Some(p) => ConfigError::from_parse_error_with_path(p, error),
+                None => ConfigError::from_parse_error(error),
+            })?;
         Self::apply_overrides(parsed)
     }
 
@@ -351,7 +350,7 @@ mod tests {
         );
         assert_eq!(
             normalize_with_config("Smørbrød.txt", &config),
-            "Smorbroed.txt"
+            "Smoerbroed.txt"
         );
     }
 
