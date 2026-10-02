@@ -425,3 +425,11 @@ fn test_rename_failure_shows_os_error_once() {
         "stderr: {stderr}"
     );
 }
+
+#[test]
+fn test_no_files_is_an_error() {
+    let (code, stderr) = run_fnorm_binary(&[]);
+
+    assert_ne!(code, Some(0), "stderr: {stderr}");
+    assert!(stderr.contains("Usage:"), "stderr: {stderr}");
+}
