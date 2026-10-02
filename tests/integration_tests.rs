@@ -298,3 +298,130 @@ fn test_directory_preserves_contents() {
         "Child file content should be preserved"
     );
 }
+
+#[test]
+fn test_cli_reports_errors_with_display_and_exit_code() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let missing = temp_dir.path().join("Missing File.txt");
+
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_fnorm"))
+        .arg(&missing)
+        .output()
+        .expect("Failed to run fnorm binary");
+
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("file not found"), "stderr: {stderr}");
+    assert!(!stderr.contains("RunError"), "stderr: {stderr}");
+}
+
+fn run_fnorm_binary(args: &[&std::ffi::OsStr]) -> (Option<i32>, String) {
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_fnorm"))
+        .args(args)
+        .output()
+        .expect("Failed to run fnorm binary");
+    (
+        output.status.code(),
+        String::from_utf8_lossy(&output.stderr).into_owned(),
+    )
+}
+
+#[test]
+fn test_config_parse_error_shows_reason() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let config = temp_dir.path().join("bad.toml");
+    fs::write(&config, "bad = [").expect("Failed to write config");
+    let file = create_test_path(temp_dir.path(), "Some File.txt", false);
+
+    let (code, stderr) =
+        run_fnorm_binary(&["--config".as_ref(), config.as_os_str(), file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(
+        stderr.contains("failed to parse config"),
+        "stderr: {stderr}"
+    );
+    assert!(stderr.contains("line 1"), "stderr: {stderr}");
+    assert!(
+        file.exists(),
+        "File must not be processed when config fails"
+    );
+}
+
+#[test]
+fn test_config_read_error_shows_os_error() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let config = temp_dir.path().join("missing.toml");
+    let file = create_test_path(temp_dir.path(), "Some File.txt", false);
+
+    let (code, stderr) =
+        run_fnorm_binary(&["--config".as_ref(), config.as_os_str(), file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("failed to read config"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("No such file or directory"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_file_not_found_names_path_once() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let missing = temp_dir.path().join("Missing File.txt");
+
+    let (code, stderr) = run_fnorm_binary(&[missing.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    let shown = missing.display().to_string();
+    assert_eq!(stderr.matches(&shown).count(), 1, "stderr: {stderr}");
+}
+
+#[cfg(unix)]
+#[test]
+fn test_permission_error_is_not_reported_as_not_found() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let locked = create_test_path(temp_dir.path(), "locked", true);
+    let file = create_test_path(&locked, "Some File.txt", false);
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).expect("chmod");
+    let readable = fs::metadata(&file).is_ok();
+
+    let (code, stderr) = run_fnorm_binary(&[file.as_os_str()]);
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).expect("chmod");
+
+    // Running as root ignores directory permissions, so there is no error to check
+    if readable {
+        return;
+    }
+    assert_eq!(code, Some(1));
+    assert!(!stderr.contains("file not found"), "stderr: {stderr}");
+    assert!(stderr.contains("Permission denied"), "stderr: {stderr}");
+}
+
+#[cfg(unix)]
+#[test]
+fn test_rename_failure_shows_os_error_once() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let readonly = create_test_path(temp_dir.path(), "readonly", true);
+    let file = create_test_path(&readonly, "Some File.txt", false);
+    fs::set_permissions(&readonly, fs::Permissions::from_mode(0o555)).expect("chmod");
+
+    let (code, stderr) = run_fnorm_binary(&[file.as_os_str()]);
+    fs::set_permissions(&readonly, fs::Permissions::from_mode(0o755)).expect("chmod");
+
+    // Running as root ignores directory permissions, so the rename succeeds
+    if code == Some(0) {
+        return;
+    }
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("failed to rename"), "stderr: {stderr}");
+    assert_eq!(
+        stderr.matches("Permission denied").count(),
+        1,
+        "stderr: {stderr}"
+    );
+}

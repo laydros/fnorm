@@ -1,7 +1,15 @@
-use clap::Parser;
-use fnorm::{run, AppError, Cli};
+use std::process::ExitCode;
 
-fn main() -> Result<(), AppError> {
+use clap::Parser;
+use fnorm::{run, Cli};
+
+fn main() -> ExitCode {
     let cli = Cli::parse();
-    run(&cli)
+    match run(&cli) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(err) => {
+            eprintln!("{err}");
+            ExitCode::FAILURE
+        }
+    }
 }
