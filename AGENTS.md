@@ -109,11 +109,11 @@ cargo fmt && cargo clippy && cargo test
 ### Common Tasks
 
 **Adding a new transliteration rule:**
-1. Update the match statement in `normalize_base()` in `src/normalize.rs`
+1. Add an entry to the `transliterations` map in `NormalizationConfig::default()` in `src/normalize.rs`
 2. Add test case to `test_transliteration()`
 
 **Adding a new special token:**
-1. Add match arm in `normalize_base()` in `src/normalize.rs`
+1. Add an entry to the `special_tokens` map in `NormalizationConfig::default()` in `src/normalize.rs`
 2. Add test case to `test_special_tokens()`
 
 **Adding CLI flags:**
@@ -124,12 +124,12 @@ cargo fmt && cargo clippy && cargo test
 ## Reference Documentation
 
 - **functional-spec.md** - Complete functional specification (authoritative source for behavior)
-- **IMPLEMENTATION.md** - Development log and TODO tracking
 - **README.md** - User-facing documentation
 
 ## Dependencies
 
 - **clap 4.4** (with derive feature) - CLI argument parsing
+- **serde 1** (with derive feature) and **toml 0.8** - Reading the `--config` file
 - **tempfile 3.8** (dev-only) - Temporary directories for integration tests
 
 ## Known Limitations

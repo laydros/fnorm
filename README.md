@@ -11,9 +11,10 @@
   - [Run the CLI](#run-the-cli)
   - [Run the test suite](#run-the-test-suite)
 - [Normalization Rules](#normalization-rules)
+- [Configuration](#configuration)
 - [Repository Layout](#repository-layout)
 - [Development Workflow](#development-workflow)
-  - [Implementing the remaining features](#implementing-the-remaining-features)
+  - [Implementing new features](#implementing-new-features)
   - [Coding standards](#coding-standards)
 - [Additional Documentation](#additional-documentation)
 - [License](#license)
@@ -23,13 +24,11 @@
 fnorm includes:
 
 - A CLI with `--dry-run`, `--config` and `--version` flags that processes both files and directories.
-- Full support for directory renaming (added in v0.2.0).
+- Full support for directory renaming.
 - A normalization library with comprehensive unit tests covering all cases from the functional specification.
 - Integration tests verifying file/directory rename operations, error handling, and dry-run mode.
 - Case-insensitive filesystem support with two-step rename logic for case-only changes.
 - Error types that provide human-readable diagnostics for common failure scenarios.
-
-Refer to [`IMPLEMENTATION.md`](IMPLEMENTATION.md) for a detailed checklist of remaining work and historical context for the port.
 
 ## Prerequisites
 
@@ -105,12 +104,6 @@ Run all tests with:
 cargo test
 ```
 
-If you need to execute the suite in an offline environment (such as Codex), run
-`./codex_setup.sh` once while you still have network access. The script vendors
-all dependencies into `./vendor` and writes a `.cargo/config.toml` that points
-Cargo at those local copies so `cargo test --offline` can succeed without
-contacting crates.io.
-
 Use `cargo test -- --nocapture` to stream any diagnostic output that tests emit.
 
 ## Normalization Rules
@@ -121,6 +114,10 @@ The normalization pipeline follows the twelve-step algorithm described in detail
 2. Replace spaces with hyphens and convert to lowercase.
 3. Substitute special tokens: `/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent-`.
 4. Transliterate select accented characters (e.g., `é` → `e`, `ß` → `ss`).
+5. Replace any remaining unsupported characters with hyphens and collapse hyphen runs.
+6. Lowercase the file extension before reassembling the final name.
+
+Hidden files keep their leading dot and have the rest of the name normalized (`.Hidden File` → `.hidden-file`).
 
 ## Configuration
 
@@ -143,10 +140,6 @@ lowercase_extension = true
 - **transliterations**: single-character keys mapped to ASCII strings.
 - **options.lowercase**: whether to lowercase the base name (default: `true`).
 - **options.lowercase_extension**: whether to lowercase the extension (default: `true`).
-5. Replace any remaining unsupported characters with hyphens and collapse hyphen runs.
-6. Lowercase the file extension before reassembling the final name.
-
-Hidden files keep their leading dot and have the rest of the name normalized (`.Hidden File` → `.hidden-file`).
 
 ## Repository Layout
 
@@ -160,7 +153,6 @@ Hidden files keep their leading dot and have the rest of the name normalized (`.
 ├── tests/
 │   └── integration_tests.rs     # integration tests for rename operations
 ├── functional-spec.md           # authoritative behavior specification
-├── IMPLEMENTATION.md            # development log and TODO checklist
 └── LICENSE                      # BSD 3-Clause license
 ```
 
@@ -186,7 +178,6 @@ Planned enhancements are tracked as GitHub issues.
 ## Additional Documentation
 
 - [`functional-spec.md`](functional-spec.md) — Required reading for any feature work; defines the CLI contract and library semantics.
-- [`IMPLEMENTATION.md`](IMPLEMENTATION.md) — Tracks porting progress and outstanding tasks.
 
 ## License
 
