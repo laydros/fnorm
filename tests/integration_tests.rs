@@ -349,6 +349,24 @@ fn test_config_parse_error_shows_reason() {
 }
 
 #[test]
+fn test_config_parse_error_reason_is_indented_under_header() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let config = temp_dir.path().join("bad.toml");
+    fs::write(&config, "bad = [").expect("Failed to write config");
+    let file = create_test_path(temp_dir.path(), "Some File.txt", false);
+
+    let (_, stderr) =
+        run_fnorm_binary(&["--config".as_ref(), config.as_os_str(), file.as_os_str()]);
+
+    let reason_lines: Vec<&str> = stderr.trim_end().lines().skip(1).collect();
+    assert!(reason_lines.len() > 1, "stderr: {stderr}");
+    assert!(
+        reason_lines.iter().all(|line| line.starts_with("  ")),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
 fn test_config_read_error_shows_os_error() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let config = temp_dir.path().join("missing.toml");
@@ -430,7 +448,7 @@ fn test_rename_failure_shows_os_error_once() {
 fn test_no_files_is_an_error() {
     let (code, stderr) = run_fnorm_binary(&[]);
 
-    assert_ne!(code, Some(0), "stderr: {stderr}");
+    assert_eq!(code, Some(2), "stderr: {stderr}");
     assert!(stderr.contains("Usage:"), "stderr: {stderr}");
 }
 
