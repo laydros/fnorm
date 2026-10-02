@@ -29,7 +29,7 @@ pub struct Cli {
     pub config: Option<PathBuf>,
 
     /// Files to normalize
-    #[arg(value_name = "FILE", num_args = 1..)]
+    #[arg(value_name = "FILE", num_args = 1.., required = true)]
     pub files: Vec<PathBuf>,
 }
 
