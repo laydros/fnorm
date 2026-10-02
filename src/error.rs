@@ -67,9 +67,7 @@ pub enum FnormError {
 impl fmt::Display for FnormError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FnormError::FileNotFound { path, .. } => {
-                write!(f, "file not found: {}", path.display())
-            }
+            FnormError::FileNotFound { .. } => write!(f, "file not found"),
             FnormError::TargetExists { path } => {
                 write!(f, "target file already exists: \"{}\"", path.display())
             }

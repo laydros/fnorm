@@ -55,8 +55,8 @@ The utility attempts to process every provided argument even when some fail; it 
         caused by: <system error>
     ```
 
-    One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found: <path>`, `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>": <system error>`.
-  * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>` and exits with status 1 without processing any paths.
+    One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found`, `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>": <system error>`.
+  * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>`, followed by `  caused by: <reason>` (the OS error or the TOML parse error), and exits with status 1 without processing any paths.
 
 ### 2.5 File Processing Algorithm
 
@@ -151,7 +151,7 @@ func Normalize(filename string) string
 | Condition | Behavior |
 |-----------|----------|
 | No positional arguments | Prints error about missing files, exit status 1. |
-| Argument path cannot be stat'ed | Reports `<path>: file not found: <path>` (with `caused by: <system error>`) in the summary, marks failure. |
+| Argument path cannot be stat'ed | Reports `<path>: file not found` (with `caused by: <system error>`) in the summary, marks failure. |
 | Target normalized filename already exists | Reports `<path>: target file already exists: "<target>"` in the summary, marks failure. |
 | Rename syscall failure | Reports `<path>: failed to rename "<from>" to "<to>": <system error>` in the summary, marks failure. |
 

@@ -250,7 +250,13 @@ pub enum AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AppError::Config(err) => write!(f, "{err}"),
+            AppError::Config(err) => {
+                write!(f, "{err}")?;
+                if let Some(source) = StdError::source(err) {
+                    write!(f, "\n  caused by: {source}")?;
+                }
+                Ok(())
+            }
             AppError::Run(err) => write!(f, "{err}"),
         }
     }
