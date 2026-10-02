@@ -258,7 +258,13 @@ impl fmt::Display for AppError {
             AppError::Config(err) => {
                 write!(f, "{err}")?;
                 if let Some(source) = StdError::source(err) {
-                    write!(f, "\n  caused by: {source}")?;
+                    // TOML parse errors span several lines; keep them all under the header
+                    let reason = source.to_string();
+                    write!(
+                        f,
+                        "\n  caused by: {}",
+                        reason.trim_end().replace('\n', "\n    ")
+                    )?;
                 }
                 Ok(())
             }
