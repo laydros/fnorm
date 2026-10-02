@@ -67,17 +67,22 @@ pub enum FnormError {
 impl fmt::Display for FnormError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FnormError::FileNotFound { .. } => write!(f, "file not found"),
+            FnormError::FileNotFound { source, .. } => {
+                if source.kind() == io::ErrorKind::NotFound {
+                    write!(f, "file not found")
+                } else {
+                    write!(f, "cannot access path")
+                }
+            }
             FnormError::TargetExists { path } => {
                 write!(f, "target file already exists: \"{}\"", path.display())
             }
-            FnormError::RenameError { from, to, source } => {
+            FnormError::RenameError { from, to, .. } => {
                 write!(
                     f,
-                    "failed to rename \"{}\" to \"{}\": {}",
+                    "failed to rename \"{}\" to \"{}\"",
                     from.display(),
-                    to.display(),
-                    source
+                    to.display()
                 )
             }
         }

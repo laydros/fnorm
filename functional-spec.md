@@ -55,7 +55,7 @@ The utility attempts to process every provided argument even when some fail; it 
         caused by: <system error>
     ```
 
-    One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found`, `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>": <system error>`.
+    One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found` (the path does not exist), `cannot access path` (any other failure to read the path, such as a permission error), `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>"`.
   * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>`, followed by `  caused by: <reason>` (the OS error or the TOML parse error), and exits with status 1 without processing any paths.
 
 ### 2.5 File Processing Algorithm
@@ -151,9 +151,10 @@ func Normalize(filename string) string
 | Condition | Behavior |
 |-----------|----------|
 | No positional arguments | Prints error about missing files, exit status 1. |
-| Argument path cannot be stat'ed | Reports `<path>: file not found` (with `caused by: <system error>`) in the summary, marks failure. |
+| Argument path does not exist | Reports `<path>: file not found` (with `caused by: <system error>`) in the summary, marks failure. |
+| Argument path cannot be read (e.g., permission denied) | Reports `<path>: cannot access path` (with `caused by: <system error>`) in the summary, marks failure. |
 | Target normalized filename already exists | Reports `<path>: target file already exists: "<target>"` in the summary, marks failure. |
-| Rename syscall failure | Reports `<path>: failed to rename "<from>" to "<to>": <system error>` in the summary, marks failure. |
+| Rename syscall failure | Reports `<path>: failed to rename "<from>" to "<to>"` (with `caused by: <system error>`) in the summary, marks failure. |
 
 ## 7. Determinism and Idempotence
 
