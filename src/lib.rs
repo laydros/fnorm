@@ -33,6 +33,34 @@ pub struct Cli {
     pub files: Vec<PathBuf>,
 }
 
+/// Check whether `path`'s directory contains an entry named exactly `name`.
+///
+/// Unlike `Path::exists`, this is case-exact on case-insensitive filesystems,
+/// so it can tell a distinct `foo.txt` apart from the source `Foo.txt`.
+fn dir_has_exact_entry(path: &Path, name: &str) -> Result<bool, FnormError> {
+    let parent = match path.parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => parent,
+        _ => Path::new("."),
+    };
+
+    let entries = std::fs::read_dir(parent).map_err(|source| FnormError::FileNotFound {
+        path: parent.to_path_buf(),
+        source,
+    })?;
+
+    for entry in entries {
+        let entry = entry.map_err(|source| FnormError::FileNotFound {
+            path: parent.to_path_buf(),
+            source,
+        })?;
+        if entry.file_name() == name {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
 /// Handle case-only renames using a temporary file to work on case-insensitive filesystems
 fn rename_case_only(
     source: &Path,
@@ -42,6 +70,10 @@ fn rename_case_only(
 ) -> Result<(), FnormError> {
     let mut temp_path = source.to_path_buf();
     temp_path.set_file_name(format!("{old_name}.fnorm-tmp"));
+
+    if temp_path.symlink_metadata().is_ok() {
+        return Err(FnormError::TargetExists { path: temp_path });
+    }
 
     // Step 1: Rename to temporary
     std::fs::rename(source, &temp_path).map_err(|e| FnormError::RenameError {
@@ -107,11 +139,16 @@ fn process_file(
     target_path.set_file_name(&normalized);
 
     if filename.to_lowercase() == normalized.to_lowercase() {
+        // On a case-sensitive filesystem the target can be a different file
+        if dir_has_exact_entry(path, &normalized)? {
+            return Err(FnormError::TargetExists { path: target_path });
+        }
         rename_case_only(path, &target_path, &filename, &normalized)?;
         return Ok(());
     }
 
-    if target_path.exists() {
+    // symlink_metadata so a dangling symlink at the target is not overwritten
+    if target_path.symlink_metadata().is_ok() {
         return Err(FnormError::TargetExists { path: target_path });
     }
 

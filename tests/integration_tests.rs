@@ -167,6 +167,52 @@ fn test_file_case_only_change() {
 }
 
 #[test]
+fn test_file_case_only_change_target_exists() {
+    let temp_dir = TempDir::new().unwrap();
+    let source = create_test_path(temp_dir.path(), "Foo.txt", false);
+    let target = temp_dir.path().join("foo.txt");
+
+    // Only meaningful where Foo.txt and foo.txt can coexist
+    if target.exists() {
+        return;
+    }
+    fs::write(&target, "original target").unwrap();
+
+    let result = run_fnorm(&source, false);
+    assert!(result.is_err(), "Should fail when a distinct target exists");
+    assert!(
+        result.unwrap_err().contains("already exists"),
+        "Error should mention target exists"
+    );
+    assert!(source.exists(), "Source should be left in place");
+    assert_eq!(
+        fs::read_to_string(&target).unwrap(),
+        "original target",
+        "Existing target must not be overwritten"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn test_file_target_is_dangling_symlink() {
+    let temp_dir = TempDir::new().unwrap();
+    let source = create_test_path(temp_dir.path(), "Source File.txt", false);
+    let target = temp_dir.path().join("source-file.txt");
+    std::os::unix::fs::symlink(temp_dir.path().join("missing"), &target).unwrap();
+
+    let result = run_fnorm(&source, false);
+    assert!(
+        result.is_err(),
+        "Should fail when target is a dangling symlink"
+    );
+    assert!(source.exists(), "Source should be left in place");
+    assert!(
+        target.symlink_metadata().unwrap().file_type().is_symlink(),
+        "Symlink must not be overwritten"
+    );
+}
+
+#[test]
 fn test_file_target_exists() {
     let temp_dir = TempDir::new().unwrap();
     let test_file = create_test_path(temp_dir.path(), "Source File.txt", false);
