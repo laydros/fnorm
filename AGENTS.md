@@ -16,6 +16,9 @@ This file provides guidance to AI coding agents (like Claude Code, GitHub Copilo
 # Build the project
 cargo build
 
+# Build with optimizations
+cargo build --release
+
 # Run the CLI
 cargo run -- [files...]
 
@@ -25,10 +28,10 @@ cargo run -- --dry-run [files...]
 
 ### Testing
 ```bash
-# Run all tests (30 total: 13 unit + 17 integration)
+# Run all tests (unit + integration)
 cargo test
 
-# Run with output
+# Run tests with output
 cargo test -- --nocapture
 
 # Run specific test
@@ -37,6 +40,9 @@ cargo test test_directory_basic_rename
 
 ### Code Quality
 ```bash
+# Check code without building
+cargo check
+
 # Format, lint, and test
 cargo fmt && cargo clippy && cargo test
 ```
@@ -71,14 +77,14 @@ cargo fmt && cargo clippy && cargo test
 
 ### Testing Strategy
 
-**Unit Tests** (13 tests in `src/normalize.rs`):
+**Unit Tests** (in `src/normalize.rs`):
 - Basic normalization cases
 - Extension handling
 - Special character substitution
 - Unicode transliteration
 - Edge cases (hidden files, empty strings, etc.)
 
-**Integration Tests** (17 tests in `tests/integration_tests.rs`):
+**Integration Tests** (in `tests/integration_tests.rs`):
 - File rename operations
 - Directory rename operations
 - Case-only renames
