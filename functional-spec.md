@@ -111,12 +111,12 @@ The library function `fnorm::normalize(&str) -> String` performs the following d
 8. **Forbidden character filtering (base name only)** – Replace every character that is not a lowercase ASCII letter `a–z`, digit `0–9`, hyphen `-`, underscore `_`, or period `.` with `-`.
 9. **Hyphen cleanup (base name only)** – Collapse runs of one or more consecutive hyphens into a single `-`.
 10. **Leading hyphen trim (base name only)** – Remove any remaining leading hyphen characters.
-11. **Extension normalization** – Convert the extension (if any) to lowercase. No other transformations are applied to the extension portion.
+11. **Extension normalization** – Apply steps 5 through 9 to the extension (lowercasing, special tokens, transliteration, forbidden-character filtering, hyphen cleanup), then remove leading and trailing hyphens. Lowercasing follows the `lowercase_extension` option rather than `lowercase`. If nothing is left, the name has no extension and no trailing dot: `b.!!` becomes `b`.
 12. **Reassembly** – Concatenate the processed base name with the (possibly empty) lowercase extension and return the result.
 
 ### 3.1 Resulting Character Set
 
-With the default rules, the normalized base name consists solely of lowercase ASCII letters, digits, hyphen, underscore, and period. The extension is only lowercased (step 11), so it can still contain other characters: `a.TX T` becomes `a.tx t`. Periods may separate the base name from the extension or remain in the base if originally present and permitted by the filtering rules. Hyphens never appear in sequence because of step 9.
+With the default rules, the normalized filename consists solely of lowercase ASCII letters, digits, hyphen, underscore, and period. For example, `a.TX T` becomes `a.tx-t`. Periods may separate the base name from the extension or remain in the base if originally present and permitted by the filtering rules. Hyphens never appear in sequence because of step 9.
 
 ### 3.2 Behavior of Special Cases
 

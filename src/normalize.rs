@@ -150,11 +150,9 @@ pub fn normalize_with_config(filename: &str, config: &NormalizationConfig) -> St
     let base = normalize_base(base_name, config);
 
     // Step 11: Extension normalization
-    let normalized_extension = if config.lowercase_extension {
-        extension.to_lowercase()
-    } else {
-        extension.to_string()
-    };
+    let cleaned_extension =
+        cleanup_hyphens(&clean_chars(extension, config.lowercase_extension, config));
+    let normalized_extension = cleaned_extension.trim_matches('-');
 
     // Step 12: Reassembly
     if normalized_extension.is_empty() {
@@ -190,10 +188,18 @@ fn normalize_base(base_name: &str, config: &NormalizationConfig) -> String {
         return String::new();
     }
 
-    let mut processed = String::with_capacity(trimmed.len() * 2);
+    let processed = clean_chars(trimmed, config.lowercase, config);
+    let cleaned = cleanup_hyphens(&processed);
+    cleaned.trim_start_matches('-').to_string()
+}
 
-    for ch in trimmed.chars() {
-        let lower_iter: Box<dyn Iterator<Item = char>> = if config.lowercase {
+/// Apply lowercasing, special tokens, transliteration and the allowed-character
+/// filter to each character of `text`
+fn clean_chars(text: &str, lowercase: bool, config: &NormalizationConfig) -> String {
+    let mut processed = String::with_capacity(text.len() * 2);
+
+    for ch in text.chars() {
+        let lower_iter: Box<dyn Iterator<Item = char>> = if lowercase {
             Box::new(ch.to_lowercase())
         } else {
             Box::new(std::iter::once(ch))
@@ -215,7 +221,7 @@ fn normalize_base(base_name: &str, config: &NormalizationConfig) -> String {
                     processed.push('-');
                 }
                 _ => {
-                    let is_allowed_letter = if config.lowercase {
+                    let is_allowed_letter = if lowercase {
                         lower.is_ascii_lowercase()
                     } else {
                         lower.is_ascii_alphabetic()
@@ -236,8 +242,7 @@ fn normalize_base(base_name: &str, config: &NormalizationConfig) -> String {
         }
     }
 
-    let cleaned = cleanup_hyphens(&processed);
-    cleaned.trim_start_matches('-').to_string()
+    processed
 }
 
 /// Collapse consecutive hyphens into single hyphens

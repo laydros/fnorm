@@ -115,7 +115,7 @@ The normalization pipeline follows the twelve-step algorithm described in detail
 3. Substitute special tokens: `/` → `-or-`, `&` → `-and-`, `@` → `-at-`, `%` → `-percent-`.
 4. Transliterate select accented characters (e.g., `é` → `e`, `ß` → `ss`).
 5. Replace any remaining unsupported characters with hyphens and collapse hyphen runs.
-6. Lowercase the file extension before reassembling the final name.
+6. Apply the same character cleanup to the file extension, and drop it if nothing is left.
 
 Hidden files keep their leading dot and have the rest of the name normalized (`.Hidden File` → `.hidden-file`).
 
