@@ -376,3 +376,52 @@ fn test_file_not_found_names_path_once() {
     let shown = missing.display().to_string();
     assert_eq!(stderr.matches(&shown).count(), 1, "stderr: {stderr}");
 }
+
+#[cfg(unix)]
+#[test]
+fn test_permission_error_is_not_reported_as_not_found() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let locked = create_test_path(temp_dir.path(), "locked", true);
+    let file = create_test_path(&locked, "Some File.txt", false);
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).expect("chmod");
+    let readable = fs::metadata(&file).is_ok();
+
+    let (code, stderr) = run_fnorm_binary(&[file.as_os_str()]);
+    fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).expect("chmod");
+
+    // Running as root ignores directory permissions, so there is no error to check
+    if readable {
+        return;
+    }
+    assert_eq!(code, Some(1));
+    assert!(!stderr.contains("file not found"), "stderr: {stderr}");
+    assert!(stderr.contains("Permission denied"), "stderr: {stderr}");
+}
+
+#[cfg(unix)]
+#[test]
+fn test_rename_failure_shows_os_error_once() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let readonly = create_test_path(temp_dir.path(), "readonly", true);
+    let file = create_test_path(&readonly, "Some File.txt", false);
+    fs::set_permissions(&readonly, fs::Permissions::from_mode(0o555)).expect("chmod");
+
+    let (code, stderr) = run_fnorm_binary(&[file.as_os_str()]);
+    fs::set_permissions(&readonly, fs::Permissions::from_mode(0o755)).expect("chmod");
+
+    // Running as root ignores directory permissions, so the rename succeeds
+    if code == Some(0) {
+        return;
+    }
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("failed to rename"), "stderr: {stderr}");
+    assert_eq!(
+        stderr.matches("Permission denied").count(),
+        1,
+        "stderr: {stderr}"
+    );
+}
