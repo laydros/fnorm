@@ -1,6 +1,6 @@
 # fnorm
 
-`fnorm` is a command-line tool and Rust library for normalizing filenames into an ASCII-only, slug-style format while preserving their extensions. It is a work-in-progress port of the original Go implementation and ships with a comprehensive functional specification to guide feature completion.
+`fnorm` is a command-line tool and Rust library for normalizing filenames into an ASCII-only, slug-style format while preserving their extensions. Its behavior is defined in `functional-spec.md`.
 
 ## Table of Contents
 
@@ -20,9 +20,9 @@
 
 ## Project Status
 
-The Rust port is feature-complete and includes:
+fnorm includes:
 
-- A CLI with `--dry-run` and `--version` flags that processes both files and directories.
+- A CLI with `--dry-run`, `--config` and `--version` flags that processes both files and directories.
 - Full support for directory renaming (added in v0.2.0).
 - A normalization library with comprehensive unit tests covering all cases from the functional specification.
 - Integration tests verifying file/directory rename operations, error handling, and dry-run mode.
@@ -174,7 +174,7 @@ Hidden files keep their leading dot and have the rest of the name normalized (`.
 4. Run `cargo fmt`, `cargo clippy`, and `cargo test` before committing to keep the codebase tidy and verified.
 5. Commit logically grouped changes with descriptive messages.
 
-The core functionality is complete. Future enhancements might include recursive directory processing, configuration files, or additional normalization rules.
+Planned enhancements are tracked as GitHub issues.
 
 ### Coding standards
 

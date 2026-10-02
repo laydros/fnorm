@@ -6,9 +6,6 @@ This file provides guidance to AI coding agents (like Claude Code, GitHub Copilo
 
 **fnorm** is a filename normalization utility written in Rust that converts filenames and directory names to ASCII-only slug format while preserving file extensions and directory structure.
 
-**Current Version:** 0.2.0
-**Status:** Feature-complete Rust port from Go
-
 ## Quick Start
 
 ### Building and Running
@@ -53,7 +50,7 @@ cargo fmt && cargo clippy && cargo test
 - **src/main.rs** - CLI entry point (thin wrapper)
 - **src/lib.rs** - Library interface, file processing logic, and public API
 - **src/normalize.rs** - Core normalization algorithm with unit tests
-- **src/error.rs** - Custom error types (FnormError, RunError)
+- **src/error.rs** - Custom error types (FnormError, ConfigError)
 - **tests/integration_tests.rs** - Integration tests for file/directory operations
 
 ### Key Features
@@ -70,9 +67,10 @@ cargo fmt && cargo clippy && cargo test
    - Collision detection (target exists)
    - Dry-run mode for preview
 
-3. **Error Handling** (`src/error.rs`):
-   - `FnormError`: File not found, target exists, rename failures
-   - `RunError`: Aggregates multiple errors for batch processing
+3. **Error Handling** (`src/error.rs`, `src/lib.rs`):
+   - `FnormError`: Missing or unreadable path, target exists, rename failures
+   - `ConfigError`: Config file read, parse and invalid-key failures
+   - `RunError` (in `src/lib.rs`): Aggregates per-path errors into one summary printed at the end
    - Human-readable error messages
 
 ### Testing Strategy
@@ -136,14 +134,9 @@ cargo fmt && cargo clippy && cargo test
 
 ## Known Limitations
 
-1. No recursive directory processing (by design - operates on specified paths only)
+1. No recursive directory processing; fnorm operates on the specified paths only
 2. Case-only renames use two-step process on case-insensitive filesystems
 
 ## Future Enhancements
 
-Potential areas for extension (not currently planned):
-- Recursive directory traversal with `-r` flag
-- Configuration file for custom transliteration rules
-- Undo/rollback functionality
-- Batch rename with pattern matching
-- Plugin system for custom normalization rules
+Planned enhancements are tracked as GitHub issues.
