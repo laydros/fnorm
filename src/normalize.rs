@@ -422,4 +422,32 @@ mod tests {
         assert_eq!(normalize("archive.tar.gz"), "archive.tar.gz");
         assert_eq!(normalize("script.sh"), "script.sh");
     }
+
+    #[test]
+    fn test_extension_gets_character_cleanup() {
+        assert_eq!(normalize("a.TX T"), "a.tx-t");
+        assert_eq!(normalize("c.tár"), "c.tar");
+        assert_eq!(normalize("d.c&d"), "d.c-and-d");
+        assert_eq!(normalize("e.-md-"), "e.md");
+        assert_eq!(normalize(".env.l ocal"), ".env.l-ocal");
+    }
+
+    #[test]
+    fn test_extension_that_cleans_to_nothing_is_dropped() {
+        assert_eq!(normalize("b.!!"), "b");
+        assert_eq!(normalize("b.---"), "b");
+    }
+
+    #[test]
+    fn test_extension_keeps_case_when_lowercase_extension_is_off() {
+        let config = NormalizationConfig::from_toml_str(
+            r#"
+            [options]
+            lowercase_extension = false
+            "#,
+        )
+        .expect("config should parse");
+
+        assert_eq!(normalize_with_config("Clip.Mp 4", &config), "clip.Mp-4");
+    }
 }
