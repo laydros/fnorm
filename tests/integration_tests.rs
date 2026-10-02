@@ -298,3 +298,19 @@ fn test_directory_preserves_contents() {
         "Child file content should be preserved"
     );
 }
+
+#[test]
+fn test_cli_reports_errors_with_display_and_exit_code() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let missing = temp_dir.path().join("Missing File.txt");
+
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_fnorm"))
+        .arg(&missing)
+        .output()
+        .expect("Failed to run fnorm binary");
+
+    assert_eq!(output.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("file not found"), "stderr: {stderr}");
+    assert!(!stderr.contains("RunError"), "stderr: {stderr}");
+}

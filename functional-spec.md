@@ -47,7 +47,16 @@ The utility attempts to process every provided argument even when some fail; it 
   * Dry-run mode does **not** emit a message for files that already satisfy the normalization rules.
 * **Standard error** – Diagnostic messages:
   * When no positional arguments are supplied: prints `Error: No files specified` followed by a reminder to use help and exits with status 1.
-  * When processing a file fails: prints `Error processing <path>: <detailed message>` and continues with remaining arguments. The detailed message matches the error returned by the filesystem operation (e.g., `stat ...: no such file or directory`, `skipping directory ...: is a directory`, `target file already exists "<name>": file exists`).
+  * When processing a file fails, the error is recorded and processing continues with the remaining arguments. After all arguments have been attempted, a single summary is printed:
+
+    ```
+    failed to process <N> path(s):
+      <path>: <detailed message>
+        caused by: <system error>
+    ```
+
+    One `<path>: <detailed message>` line is printed per failed argument; the `caused by:` line appears only when an underlying OS error is available. Detailed messages are `file not found: <path>`, `target file already exists: "<target>"`, and `failed to rename "<from>" to "<to>": <system error>`.
+  * When the configuration file cannot be read or parsed: prints `failed to read config at <path>` or `failed to parse config at <path>` and exits with status 1 without processing any paths.
 
 ### 2.5 File Processing Algorithm
 
@@ -142,10 +151,9 @@ func Normalize(filename string) string
 | Condition | Behavior |
 |-----------|----------|
 | No positional arguments | Prints error about missing files, exit status 1. |
-| Argument refers to a directory | Prints `Error processing <path>: skipping directory <path>: is a directory`, exit status reflects failure. |
-| Argument path cannot be stat'ed | Prints `Error processing <path>: stat <path>: <system error>`, marks failure. |
-| Target normalized filename already exists (non case-only) | Prints `Error processing <path>: target file already exists "<normalized>": file exists`, marks failure. |
-| Rename syscall failure | Prints `Error processing <path>: failed to rename ...`, marks failure. |
+| Argument path cannot be stat'ed | Reports `<path>: file not found: <path>` (with `caused by: <system error>`) in the summary, marks failure. |
+| Target normalized filename already exists | Reports `<path>: target file already exists: "<target>"` in the summary, marks failure. |
+| Rename syscall failure | Reports `<path>: failed to rename "<from>" to "<to>": <system error>` in the summary, marks failure. |
 
 ## 7. Determinism and Idempotence
 

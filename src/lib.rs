@@ -223,15 +223,15 @@ impl RunError {
 impl fmt::Display for RunError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.entries.len() == 1 {
-            writeln!(f, "failed to process 1 path:")?;
+            write!(f, "failed to process 1 path:")?;
         } else {
-            writeln!(f, "failed to process {} paths:", self.entries.len())?;
+            write!(f, "failed to process {} paths:", self.entries.len())?;
         }
 
         for entry in &self.entries {
-            writeln!(f, "  {}: {}", entry.path.display(), entry.error)?;
+            write!(f, "\n  {}: {}", entry.path.display(), entry.error)?;
             if let Some(source) = StdError::source(&entry.error) {
-                writeln!(f, "    caused by: {source}")?;
+                write!(f, "\n    caused by: {source}")?;
             }
         }
 
