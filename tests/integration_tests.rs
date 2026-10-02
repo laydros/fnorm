@@ -433,3 +433,42 @@ fn test_no_files_is_an_error() {
     assert_ne!(code, Some(0), "stderr: {stderr}");
     assert!(stderr.contains("Usage:"), "stderr: {stderr}");
 }
+
+#[test]
+fn test_name_that_normalizes_to_nothing_is_left_alone() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let file = create_test_path(temp_dir.path(), "!!!", false);
+
+    let (code, stderr) = run_fnorm_binary(&[file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("empty name"), "stderr: {stderr}");
+    assert!(file.exists(), "Original file should be untouched");
+}
+
+#[test]
+fn test_name_with_only_extension_left_is_not_made_hidden() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let file = create_test_path(temp_dir.path(), "!!!.txt", false);
+
+    let (code, stderr) = run_fnorm_binary(&[file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("empty name"), "stderr: {stderr}");
+    assert!(file.exists(), "Original file should be untouched");
+    assert!(
+        !temp_dir.path().join(".txt").exists(),
+        "File must not become a hidden file"
+    );
+}
+
+#[test]
+fn test_dry_run_reports_name_that_normalizes_to_nothing() {
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let file = create_test_path(temp_dir.path(), "!!!.txt", false);
+
+    let (code, stderr) = run_fnorm_binary(&["--dry-run".as_ref(), file.as_os_str()]);
+
+    assert_eq!(code, Some(1));
+    assert!(stderr.contains("empty name"), "stderr: {stderr}");
+}
