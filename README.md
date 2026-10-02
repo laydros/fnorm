@@ -25,7 +25,7 @@ The Rust port is feature-complete and includes:
 - A CLI with `--dry-run` and `--version` flags that processes both files and directories.
 - Full support for directory renaming (added in v0.2.0).
 - A normalization library with comprehensive unit tests covering all cases from the functional specification.
-- Integration tests (15 tests) verifying file/directory rename operations, error handling, and dry-run mode.
+- Integration tests (17 tests) verifying file/directory rename operations, error handling, and dry-run mode.
 - Case-insensitive filesystem support with two-step rename logic for case-only changes.
 - Error types that provide human-readable diagnostics for common failure scenarios.
 
@@ -96,8 +96,8 @@ Errors (missing paths, collisions, rename failures) are reported to standard err
 
 The project includes both unit tests and integration tests:
 
-- **Unit tests** (12 tests) in `src/normalize.rs` cover the normalization algorithm
-- **Integration tests** (15 tests) in `tests/integration_tests.rs` verify file/directory operations
+- **Unit tests** (13 tests) in `src/normalize.rs` cover the normalization algorithm
+- **Integration tests** (17 tests) in `tests/integration_tests.rs` verify file/directory operations
 
 Run all tests with:
 
@@ -146,7 +146,7 @@ lowercase_extension = true
 5. Replace any remaining unsupported characters with hyphens and collapse hyphen runs.
 6. Lowercase the file extension before reassembling the final name.
 
-The specification also documents known edge cases, such as hidden files whose entire name is treated as an extension (`.Hidden File` → `.hidden file`).
+Hidden files keep their leading dot and have the rest of the name normalized (`.Hidden File` → `.hidden-file`).
 
 ## Repository Layout
 

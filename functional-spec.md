@@ -63,8 +63,8 @@ For each file argument after flag parsing:
      * In dry-run mode, print nothing.
    * If a change is required and `-dry-run` is active, emit `Would rename: <old> -> <new>` and skip filesystem changes.
    * If a change is required and `-dry-run` is not active:
-     * Detect case-only renames by comparing the old and new full paths with `strings.EqualFold`. For case-only renames, perform a two-step rename via a temporary `<original>.fnorm-tmp` filename to support case-insensitive filesystems. Restore the original name if the second step fails.
-     * For other renames, fail early if a file already exists at the target path (`os.Stat` check) and report `target file already exists`.
+     * Detect case-only renames by comparing the old and new full paths with `strings.EqualFold`. For case-only renames, fail with `target file already exists` if the directory already contains an entry with the exact new name (a distinct file on a case-sensitive filesystem) or the temporary name; otherwise perform a two-step rename via a temporary `<original>.fnorm-tmp` filename to support case-insensitive filesystems. Restore the original name if the second step fails.
+     * For other renames, fail early if anything, including a dangling symlink, already exists at the target path (`os.Lstat` check) and report `target file already exists`.
      * Apply `os.Rename` to move the file. Upon success, print `Renamed: <old> -> <new>`.
 4. After all arguments are processed, exit with code 1 if any of the operations returned an error; otherwise exit 0.
 
@@ -112,7 +112,7 @@ After normalization, the filename will consist solely of lowercase ASCII letters
 * Filenames lacking an extension (no `.` after the first character) are returned as the normalized base name without a trailing dot.
 * A filename that is already compliant (e.g., `example-file.txt`) returns unchanged.
 * An input of `""` yields `""`.
-* Names beginning with `.` that do not contain additional dots (e.g., `.bashrc`) are treated as extensions by `filepath.Ext`; the function therefore lowercases the entire name without applying base-name rules. Example: `.Hidden File` becomes `.hidden file`, preserving spaces. This is a known deviation from the intended hyphenation behavior.
+* Names beginning with `.` are hidden files. Leading dots are a hidden-file marker, not an extension delimiter: they are removed, the remainder is normalized with the full rules (including extension detection), and a single `.` is reattached. Examples: `.Hidden File` → `.hidden-file`, `.Hidden File.TXT` → `.hidden-file.txt`, `.bashrc` → `.bashrc`. If the remainder normalizes to an empty string, the result is `""`.
 
 ## 4. Library API Contract
 
@@ -135,7 +135,7 @@ func Normalize(filename string) string
 | `café menu.txt` | `cafe-menu.txt` |
 | `rock’n’roll.txt` | `rock-n-roll.txt` |
 | `Résumé` | `resume` |
-| `.Hidden File` | `.hidden file` (spaces preserved because the entire name is treated as an extension) |
+| `.Hidden File` | `.hidden-file` (leading dot preserved, remainder normalized) |
 
 ## 6. Error Conditions Summary
 
@@ -158,5 +158,4 @@ Running `fnorm` multiple times on the same set of files is idempotent: after the
 
 ## 9. Known Limitations
 
-* Hidden files whose names consist solely of a leading dot followed by characters without another dot are not fully normalized: hyphenation and forbidden character replacement are not applied because the entire name is interpreted as the extension. Example: `.Hidden File` → `.hidden file` (space preserved).
 * The transliteration table is limited to the explicit runes listed in Section 3.7; other Unicode characters are reduced to hyphens by the forbidden-character filter.

@@ -132,6 +132,17 @@ pub fn normalize_with_config(filename: &str, config: &NormalizationConfig) -> St
         return String::new();
     }
 
+    // Hidden files: leading dots mark the file as hidden rather than starting
+    // an extension. Normalize the remainder and reattach a single dot.
+    if filename.starts_with('.') {
+        let normalized = normalize_with_config(filename.trim_start_matches('.'), config);
+        return if normalized.is_empty() {
+            normalized
+        } else {
+            format!(".{normalized}")
+        };
+    }
+
     // Step 2: Extension detection
     let (base_name, extension) = split_extension(filename.trim());
 
@@ -158,7 +169,7 @@ pub fn normalize_with_config(filename: &str, config: &NormalizationConfig) -> St
 fn split_extension(filename: &str) -> (&str, &str) {
     if let Some(dot_pos) = filename.rfind('.') {
         if dot_pos == 0 {
-            // Hidden file like ".bashrc" - treat entire name as extension
+            // Leading dot left after trimming whitespace - treat rest as extension
             ("", &filename[1..])
         } else if dot_pos == filename.len() - 1 {
             // Ends with lone dot - no extension
@@ -278,7 +289,7 @@ mod tests {
         assert_eq!(normalize("café menu.txt"), "cafe-menu.txt");
         assert_eq!(normalize("rock'n'roll.txt"), "rock-n-roll.txt");
         assert_eq!(normalize("Résumé"), "resume");
-        assert_eq!(normalize(".Hidden File"), ".hidden file"); // Known limitation
+        assert_eq!(normalize(".Hidden File"), ".hidden-file");
     }
 
     #[test]
@@ -375,7 +386,7 @@ mod tests {
         // Only extension
         assert_eq!(normalize(".txt"), ".txt");
 
-        // Hidden file (entire name treated as extension)
+        // Hidden files
         assert_eq!(normalize(".hidden"), ".hidden");
         assert_eq!(normalize(".bashrc"), ".bashrc");
 
@@ -390,7 +401,18 @@ mod tests {
 
         // Whitespace and dots
         assert_eq!(normalize("  .file name. "), "file-name");
-        assert_eq!(normalize("...dotted..."), "dotted");
+        assert_eq!(normalize("...dotted..."), ".dotted");
+    }
+
+    #[test]
+    fn test_hidden_files() {
+        assert_eq!(normalize(".Hidden File"), ".hidden-file");
+        assert_eq!(normalize(".Hidden File.TXT"), ".hidden-file.txt");
+        assert_eq!(normalize(".config.bak"), ".config.bak");
+        assert_eq!(normalize(".env.local"), ".env.local");
+        assert_eq!(normalize(".Café & Co"), ".cafe-and-co");
+        assert_eq!(normalize("..double"), ".double");
+        assert_eq!(normalize("."), "");
     }
 
     #[test]

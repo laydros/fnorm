@@ -53,7 +53,7 @@ Implement the 12-step normalization algorithm in `src/normalize.rs`:
 Update tests in `src/normalize.rs`:
 
 - [ ] All examples from functional spec
-- [ ] Hidden file edge cases
+- [x] Hidden file edge cases
 - [ ] Files without extensions
 - [ ] Special character handling
 - [ ] Transliteration verification
@@ -130,4 +130,4 @@ When resuming development:
 
 ## Known Issues
 
-1. Hidden file handling needs special attention per functional spec deviation
+1. ~~Hidden file handling needs special attention per functional spec deviation~~ Fixed (#23)

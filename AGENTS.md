@@ -25,7 +25,7 @@ cargo run -- --dry-run [files...]
 
 ### Testing
 ```bash
-# Run all tests (27 total: 12 unit + 15 integration)
+# Run all tests (30 total: 13 unit + 17 integration)
 cargo test
 
 # Run with output
@@ -71,14 +71,14 @@ cargo fmt && cargo clippy && cargo test
 
 ### Testing Strategy
 
-**Unit Tests** (11 tests in `src/normalize.rs`):
+**Unit Tests** (13 tests in `src/normalize.rs`):
 - Basic normalization cases
 - Extension handling
 - Special character substitution
 - Unicode transliteration
 - Edge cases (hidden files, empty strings, etc.)
 
-**Integration Tests** (15 tests in `tests/integration_tests.rs`):
+**Integration Tests** (17 tests in `tests/integration_tests.rs`):
 - File rename operations
 - Directory rename operations
 - Case-only renames
@@ -131,9 +131,8 @@ cargo fmt && cargo clippy && cargo test
 
 ## Known Limitations
 
-1. Hidden files (starting with `.`) treat entire name as extension: `.Hidden File` → `.hidden file`
-2. No recursive directory processing (by design - operates on specified paths only)
-3. Case-only renames use two-step process on case-insensitive filesystems
+1. No recursive directory processing (by design - operates on specified paths only)
+2. Case-only renames use two-step process on case-insensitive filesystems
 
 ## Future Enhancements
 
